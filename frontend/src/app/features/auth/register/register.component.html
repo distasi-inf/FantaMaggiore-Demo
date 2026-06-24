@@ -1,0 +1,230 @@
+<div class="min-h-screen bg-gray-100 flex items-center justify-center p-4 py-12">
+  <div class="card-fanta w-full max-w-2xl mx-auto">
+    <h2 class="text-3xl font-black text-center mb-8 tracking-tight">
+      <span class="text-gray-800">Fanta</span><span class="text-bordeaux">Maggiore</span>
+    </h2>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="label-fanta">Nome</label>
+          <input
+            type="text"
+            formControlName="firstName"
+            class="input-fanta"
+            placeholder="Es. Mario"
+            [class.border-red-500]="registerForm.get('firstName')?.invalid && registerForm.get('firstName')?.touched"
+          />
+          @if (registerForm.get('firstName')?.hasError('pattern') && registerForm.get('firstName')?.touched) {
+            <p class="text-[10px] text-red-500 italic mt-1">• Solo lettere e apostrofi ammessi</p>
+          }
+        </div>
+
+        <div>
+          <label class="label-fanta">Cognome</label>
+          <input
+            type="text"
+            formControlName="surname"
+            class="input-fanta"
+            placeholder="Es. Rossi"
+            [class.border-red-500]="registerForm.get('surname')?.invalid && registerForm.get('surname')?.touched"
+          />
+          @if (registerForm.get('surname')?.hasError('pattern') && registerForm.get('surname')?.touched) {
+            <p class="text-[10px] text-red-500 italic mt-1">• Solo lettere e apostrofi ammessi</p>
+          }
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="label-fanta">Username</label>
+          <input
+            type="text"
+            formControlName="username"
+            class="input-fanta"
+            (input)="usernameInput$.next($any($event.target).value)"
+            [ngClass]="{
+              'border-red-500': registerForm.get('username')?.invalid && registerForm.get('username')?.touched,
+              'border-green-500': usernameOk && registerForm.get('username')?.valid
+            }"
+          />
+          @if (registerForm.get('username')?.touched) {
+            <div class="mt-1 space-y-1 text-[10px] italic">
+              @if (registerForm.get('username')?.hasError('pattern')) {
+                <p class="text-red-500">• Usa solo lettere, numeri e spazi</p>
+              }
+              @if (registerForm.get('username')?.hasError('nameTaken')) {
+                <p class="text-red-500 font-bold">• ❌ Username già occupato</p>
+              }
+              @if (usernameOk && registerForm.get('username')?.valid) {
+                <p class="text-green-600 font-bold">• ✅ Username disponibile</p>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="flex flex-col">
+          <label class="label-fanta">Nazionalità</label>
+          <div class="dropdown w-full">
+            <div
+              tabindex="0"
+              role="button"
+              class="input-fanta flex justify-between items-center bg-white text-gray-800 focus:ring-bordeaux focus:border-bordeaux"
+              [ngClass]="{'border-red-500': registerForm.get('nationality')?.invalid && registerForm.get('nationality')?.touched}"
+            >
+              @if (getSelectedCountry(); as selected) {
+                <div class="flex items-center gap-3">
+                  <img [src]="'https://flagcdn.com/' + selected.code + '.svg'" alt="flag" class="w-5 h-auto shadow-sm" />
+                  <span class="font-medium">{{ selected.name }}</span>
+                </div>
+              } @else {
+                <span class="text-gray-400 font-normal">Seleziona nazione</span>
+              }
+              <lucide-icon name="chevron-down" class="w-4 h-4 text-gray-400"></lucide-icon>
+            </div>
+
+            <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow-2xl bg-white rounded-xl w-full mt-2 border border-gray-100 max-h-60 overflow-y-auto block">
+              @for (country of countries; track country.code) {
+                <li class="mb-1">
+                  <a (click)="setNationality(country.code)" class="hover:bg-bordeaux hover:text-white flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer text-gray-700">
+                    <img [src]="'https://flagcdn.com/' + country.code + '.svg'" alt="flag" class="w-5 h-auto shadow-sm" />
+                    <span class="font-medium">{{ country.name }}</span>
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+          @if (registerForm.get('nationality')?.invalid && registerForm.get('nationality')?.touched) {
+            <p class="text-[10px] text-red-500 italic mt-1">• Seleziona una nazionalità</p>
+          }
+        </div>
+      </div>
+
+      <div>
+        <label class="label-fanta">Nome della tua squadra</label>
+        <input
+          type="text"
+          formControlName="fantasyTeamName"
+          class="input-fanta"
+          (input)="teamNameInput$.next($any($event.target).value)"
+          [ngClass]="{
+            'border-red-500': registerForm.get('fantasyTeamName')?.invalid && registerForm.get('fantasyTeamName')?.touched,
+            'border-green-500': teamNameOk && registerForm.get('fantasyTeamName')?.valid
+          }"
+        />
+        @if (registerForm.get('fantasyTeamName')?.touched) {
+          <div class="mt-1 space-y-1 text-[10px] italic">
+            @if (registerForm.get('fantasyTeamName')?.hasError('required')) {
+              <p class="text-red-500">• Il nome squadra è obbligatorio</p>
+            }
+            @if (registerForm.get('fantasyTeamName')?.hasError('pattern')) {
+              <p class="text-red-500">• Usa solo lettere, numeri e spazi</p>
+            }
+            @if (registerForm.get('fantasyTeamName')?.hasError('nameTaken')) {
+              <p class="text-red-500 font-bold">• ❌ Nome squadra già in uso</p>
+            }
+            @if (teamNameOk && registerForm.get('fantasyTeamName')?.valid) {
+              <p class="text-green-600 font-bold">• ✅ Nome squadra disponibile</p>
+            }
+          </div>
+        }
+      </div>
+
+      <div>
+        <label class="label-fanta">Email</label>
+        <input
+          type="email"
+          formControlName="email"
+          class="input-fanta"
+          placeholder="mario@email.com"
+          (input)="emailInput$.next($any($event.target).value)"
+          [ngClass]="{
+            'border-red-500': registerForm.get('email')?.invalid && registerForm.get('email')?.touched,
+            'border-green-500': emailOk && registerForm.get('email')?.valid
+          }"
+        />
+        @if (registerForm.get('email')?.touched) {
+          <div class="mt-1 text-[10px] italic">
+            @if (registerForm.get('email')?.hasError('email')) {
+              <p class="text-red-500">• Inserisci un'email valida</p>
+            }
+            @if (registerForm.get('email')?.hasError('emailTaken')) {
+              <p class="text-red-500 font-bold">• ❌ Email già registrata</p>
+            }
+            @if (emailOk && registerForm.get('email')?.valid) {
+              <p class="text-green-600 font-bold">• ✅ Email disponibile</p>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="label-fanta">Password</label>
+          <div class="relative">
+            <input
+              [type]="hidePassword ? 'password' : 'text'"
+              formControlName="password"
+              class="input-fanta pr-10"
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              (click)="togglePassword()"
+              class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-bordeaux transition-colors"
+            >
+              <lucide-icon [name]="hidePassword ? 'eye' : 'eye-off'" class="w-4 h-4"></lucide-icon>
+            </button>
+          </div>
+          @if (registerForm.get('password')?.touched) {
+            <div class="mt-1 space-y-1 text-[10px] italic">
+              <p [ngClass]="registerForm.get('password')?.hasError('minlength') ? 'text-red-500' : 'text-gray-400'">• Almeno 8 caratteri</p>
+              <p [ngClass]="registerForm.get('password')?.hasError('pattern') ? 'text-red-500' : 'text-gray-400'">• Almeno una maiuscola e un numero</p>
+            </div>
+          }
+        </div>
+
+        <div>
+          <label class="label-fanta">Conferma Password</label>
+          <div class="relative">
+            <input
+              [type]="hideConfirmPassword ? 'password' : 'text'"
+              formControlName="confirmPassword"
+              class="input-fanta pr-10"
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              (click)="toggleConfirmPassword()"
+              class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-bordeaux transition-colors"
+            >
+              <lucide-icon [name]="hideConfirmPassword ? 'eye' : 'eye-off'" class="w-4 h-4"></lucide-icon>
+            </button>
+          </div>
+          @if (registerForm.errors?.['passwordMismatch'] && registerForm.get('confirmPassword')?.touched) {
+            <p class="text-xs text-red-500 mt-1 italic">Le password non coincidono!</p>
+          }
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        [disabled]="registerForm.invalid || isSubmitting"
+        class="btn-fanta flex items-center justify-center gap-2 mt-6 w-full"
+      >
+        @if (isSubmitting) {
+          <span class="loading loading-spinner"></span> Registrazione...
+        } @else {
+          Registrati
+        }
+      </button>
+      
+      <div class="text-center mt-4">
+        <p class="text-gray-500 text-sm">Hai già un account? 
+          <a routerLink="/login" class="text-bordeaux font-bold hover:underline">Accedi</a>
+        </p>
+      </div>
+
+    </form>
+  </div>
+</div>

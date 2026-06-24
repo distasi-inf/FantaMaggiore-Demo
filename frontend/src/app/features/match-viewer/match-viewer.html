@@ -1,0 +1,404 @@
+<app-header iconName="" [showAdminButton]="false">
+  <div custom-title class="flex items-center gap-1.5 -ml-2">
+    <button
+      (click)="location.back()"
+      class="p-2 rounded-xl hover:bg-gray-100 active:scale-95 transition-all text-gray-800 flex items-center justify-center"
+    >
+      <lucide-icon name="arrow-left" class="w-5 h-5"></lucide-icon>
+    </button>
+    <span class="truncate">Diretta Match</span>
+  </div>
+</app-header>
+
+<div class="p-2 sm:p-4 max-w-5xl mx-auto space-y-6 pb-40 mt-4">
+  @if (isLoading()) {
+    <div class="flex flex-col gap-6 animate-pulse">
+      <div class="h-[200px] sm:h-[280px] bg-gray-200 rounded-[2.5rem] shadow-sm w-full"></div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="h-[400px] bg-gray-200 rounded-3xl w-full"></div>
+        <div class="h-[400px] bg-gray-200 rounded-3xl w-full"></div>
+      </div>
+
+      <div class="h-[250px] bg-gray-200 rounded-3xl w-full"></div>
+    </div>
+  } @else if (match(); as m) {
+    <div
+      class="relative overflow-hidden rounded-[2.5rem] bg-gray-900 shadow-2xl p-6 sm:p-10 lg:p-12 border-b-8 border-bordeaux"
+    >
+      <div
+        class="absolute inset-0 bg-gradient-to-br from-bordeaux/20 to-transparent pointer-events-none"
+      ></div>
+
+      <div class="relative z-10 flex flex-col items-center">
+        <div class="mb-6 sm:mb-8">
+          <span
+            class="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] px-4 py-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-md"
+            [ngClass]="{
+              'text-yellow-400': m.matchStatus === 'PRE',
+              'text-red-500 animate-pulse': m.matchStatus === 'LIVE',
+              'text-gray-400': m.matchStatus === 'FINISHED',
+            }"
+          >
+            {{
+              m.matchStatus === 'PRE'
+                ? 'In attesa'
+                : m.matchStatus === 'LIVE'
+                  ? '● Live'
+                  : 'Fischio Finale'
+            }}
+          </span>
+        </div>
+
+        <div class="flex flex-col sm:flex-row w-full items-center justify-center gap-6 sm:gap-12">
+          <div
+            class="flex-1 flex justify-center sm:justify-end text-center sm:text-right w-full px-2"
+          >
+            <h2
+              class="text-2xl sm:text-4xl lg:text-5xl font-black text-white uppercase italic tracking-tighter drop-shadow-md pr-1"
+            >
+              {{ m.homeTeamName }}
+            </h2>
+          </div>
+
+          <div
+            class="flex items-center gap-4 sm:gap-6 bg-white/5 p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border border-white/10 shadow-inner"
+          >
+            <span class="text-5xl sm:text-7xl font-black text-white tabular-nums drop-shadow-lg">
+              {{ m.matchStatus === 'PRE' ? '-' : m.homeScore }}
+            </span>
+            <span class="text-3xl sm:text-4xl font-black text-bordeaux/50">:</span>
+            <span class="text-5xl sm:text-7xl font-black text-white tabular-nums drop-shadow-lg">
+              {{ m.matchStatus === 'PRE' ? '-' : m.awayScore }}
+            </span>
+          </div>
+
+          <div
+            class="flex-1 flex justify-center sm:justify-start text-center sm:text-left w-full px-2"
+          >
+            <h2
+              class="text-2xl sm:text-4xl lg:text-5xl font-black text-white uppercase italic tracking-tighter drop-shadow-md pr-1"
+            >
+              {{ m.awayTeamName }}
+            </h2>
+          </div>
+        </div>
+
+        @if (m.matchStatus === 'LIVE' && m.expectedDuration) {
+          <div
+            class="mt-8 flex items-center gap-2 px-4 py-1 rounded-full bg-white/5 border border-white/5"
+          >
+            <lucide-icon name="timer" class="w-3.5 h-3.5 text-gray-500"></lucide-icon>
+            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest"
+              >Durata: {{ m.expectedDuration }}'</span
+            >
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="card-fanta p-6 border border-gray-100 bg-white shadow-sm">
+        <div class="flex items-center justify-between mb-6">
+          <h3
+            class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2"
+          >
+            <lucide-icon name="scroll-text" class="w-4 h-4"></lucide-icon> Cronaca Live
+          </h3>
+        </div>
+
+        @if (matchEvents().length === 0) {
+          <div
+            class="flex flex-col items-center justify-center py-16 text-gray-300 bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-100"
+          >
+            @if (m.matchStatus === 'PRE') {
+              <lucide-icon name="mic-off" class="w-10 h-10 mb-2 opacity-30"></lucide-icon>
+              <p class="text-[10px] font-black uppercase tracking-widest text-center">
+                In attesa del fischio d'inizio...
+              </p>
+            } @else if (m.matchStatus === 'LIVE') {
+              <lucide-icon
+                name="activity"
+                class="w-10 h-10 mb-2 opacity-40 text-bordeaux animate-pulse"
+              ></lucide-icon>
+              <p class="text-[10px] font-black uppercase tracking-widest text-center text-gray-500">
+                Partita in corso...
+                <br />
+                <span class="text-gray-400 font-bold text-[8px]"
+                  >Nessun evento registrato finora</span
+                >
+              </p>
+            } @else {
+              <lucide-icon name="shield" class="w-10 h-10 mb-2 opacity-30"></lucide-icon>
+              <p class="text-[10px] font-black uppercase tracking-widest text-center text-gray-500">
+                Partita terminata
+                <br />
+                <span class="text-gray-400 font-bold text-[8px]">Reti inviolate</span>
+              </p>
+            }
+          </div>
+        } @else {
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 sm:gap-6 relative">
+            <div
+              class="hidden sm:block absolute left-1/2 top-10 bottom-0 w-px bg-gray-100 -translate-x-1/2"
+            ></div>
+
+            <div class="space-y-4">
+              <div
+                class="text-[9px] font-black text-white bg-gray-800 px-3 py-2 rounded-xl mb-6 text-center truncate shadow-md border border-gray-700"
+              >
+                {{ m.homeTeamName }}
+              </div>
+
+              <div class="space-y-5">
+                @for (ev of homeMatchEvents(); track ev.id) {
+                  <div class="flex items-center gap-4 animate-in slide-in-from-left duration-300">
+                    <div
+                      class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-sm shrink-0"
+                      [ngClass]="
+                        ev.type === 'GOAL'
+                          ? 'bg-green-100 text-green-700'
+                          : ev.type === 'OWNGOAL'
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-blue-100 text-blue-700'
+                      "
+                    >
+                      {{ ev.type === 'GOAL' ? '⚽' : ev.type === 'OWNGOAL' ? '💥' : '👟' }}
+                    </div>
+                    <div class="text-left">
+                      <p class="text-sm font-black text-gray-800 leading-tight">
+                        {{ getPlayerName(ev.playerId) }}
+                      </p>
+                      <div class="flex items-center gap-2 mt-0.5">
+                        @if (ev.type === 'OWNGOAL') {
+                          <span
+                            class="text-red-500 text-[8px] font-black uppercase tracking-tighter"
+                            >Autogol</span
+                          >
+                        }
+                        @if (ev.assistPlayerId) {
+                          <p class="text-[9px] text-gray-400 font-bold flex items-center gap-1">
+                            <span class="text-xs" title="Assist">👟</span>
+                            {{ getPlayerName(ev.assistPlayerId) }}
+                          </p>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                } @empty {
+                  <p class="text-[10px] text-gray-300 italic text-center py-4">
+                    Nessun evento per i locali
+                  </p>
+                }
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div
+                class="text-[9px] font-black text-white bg-bordeaux px-3 py-2 rounded-xl mb-6 text-center truncate shadow-md border border-red-900"
+              >
+                {{ m.awayTeamName }}
+              </div>
+
+              <div class="space-y-5">
+                @for (ev of awayMatchEvents(); track ev.id) {
+                  <div
+                    class="flex flex-row-reverse items-center gap-4 animate-in slide-in-from-right duration-300"
+                  >
+                    <div
+                      class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-sm shrink-0"
+                      [ngClass]="
+                        ev.type === 'GOAL'
+                          ? 'bg-green-100 text-green-700'
+                          : ev.type === 'OWNGOAL'
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-blue-100 text-blue-700'
+                      "
+                    >
+                      {{ ev.type === 'GOAL' ? '⚽' : ev.type === 'OWNGOAL' ? '💥' : '👟' }}
+                    </div>
+                    <div class="text-right">
+                      <p class="text-sm font-black text-gray-800 leading-tight">
+                        {{ getPlayerName(ev.playerId) }}
+                      </p>
+                      <div class="flex items-center gap-2 mt-0.5 justify-end">
+                        @if (ev.assistPlayerId) {
+                          <p class="text-[9px] text-gray-400 font-bold flex items-center gap-1">
+                            Assist: {{ getPlayerName(ev.assistPlayerId) }}
+                            <span class="text-xs" title="Assist">👟</span>
+                          </p>
+                        }
+                        @if (ev.type === 'OWNGOAL') {
+                          <span
+                            class="text-red-500 text-[8px] font-black uppercase tracking-tighter"
+                            >Autogol</span
+                          >
+                        }
+                      </div>
+                    </div>
+                  </div>
+                } @empty {
+                  <p class="text-[10px] text-gray-300 italic text-center py-4">
+                    Nessun evento per gli ospiti
+                  </p>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="card-fanta p-6 border border-gray-100 bg-white">
+        <h3
+          class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2"
+        >
+          <lucide-icon name="users" class="w-4 h-4"></lucide-icon> Formazioni
+        </h3>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <div
+              class="text-[9px] font-black text-white bg-gray-800 px-3 py-2 rounded-xl mb-4 text-center truncate shadow-md"
+            >
+              {{ m.homeTeamName }}
+            </div>
+            @for (p of matchPlayers(); track p.id) {
+              @if (p.side === 'home') {
+                <div
+                  class="flex items-center gap-3 p-2.5 rounded-2xl bg-gray-50 border border-gray-100 transition-all hover:bg-white hover:shadow-md"
+                >
+                  <span
+                    class="w-6 h-6 flex items-center justify-center rounded-lg font-black text-[10px] shrink-0 shadow-sm"
+                    [ngClass]="{
+                      'bg-yellow-500 text-white': p.role === 'PORTIERE',
+                      'bg-blue-500 text-white': p.role === 'DIFENSORE',
+                      'bg-green-600 text-white': p.role === 'CENTROCAMPISTA',
+                      'bg-red-600 text-white': p.role === 'ATTACCANTE',
+                    }"
+                  >
+                    {{ p.role[0] }}
+                  </span>
+                  <div class="flex-1 overflow-hidden">
+                    <p class="font-bold text-xs text-gray-700 truncate leading-none">
+                      {{ p.surname }}
+                    </p>
+
+                    <div class="flex gap-1 mt-1.5 flex-wrap">
+                      @let stats = getMatchStats(p.id);
+
+                      @for (g of getArray(stats.goals); track $index) {
+                        <span class="text-xs" title="Gol">⚽</span>
+                      }
+                      @for (a of getArray(stats.assists); track $index) {
+                        <span class="text-xs" title="Assist">👟</span>
+                      }
+                      @for (ag of getArray(stats.ownGoals); track $index) {
+                        <span class="text-xs" title="Autogol">💥</span>
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+
+          <div class="space-y-2">
+            <div
+              class="text-[9px] font-black text-white bg-bordeaux px-3 py-2 rounded-xl mb-4 text-center truncate shadow-md"
+            >
+              {{ m.awayTeamName }}
+            </div>
+            @for (p of matchPlayers(); track p.id) {
+              @if (p.side === 'away') {
+                <div
+                  class="flex items-center justify-end gap-3 p-2.5 rounded-2xl bg-gray-50 border border-gray-100 transition-all hover:bg-white hover:shadow-md"
+                >
+                  <div class="flex-1 overflow-hidden text-right">
+                    <p class="font-bold text-xs text-gray-700 truncate leading-none">
+                      {{ p.surname }}
+                    </p>
+
+                    @let stats = getMatchStats(p.id);
+                    <div class="flex gap-1 mt-1.5 justify-end flex-wrap">
+                      @for (g of getArray(stats.goals); track $index) {
+                        <span class="text-xs" title="Gol">⚽</span>
+                      }
+                      @for (a of getArray(stats.assists); track $index) {
+                        <span class="text-xs" title="Assist">👟</span>
+                      }
+                      @for (ag of getArray(stats.ownGoals); track $index) {
+                        <span class="text-xs" title="Autogol">💥</span>
+                      }
+                    </div>
+                  </div>
+                  <span
+                    class="w-6 h-6 flex items-center justify-center rounded-lg font-black text-[10px] shrink-0 shadow-sm"
+                    [ngClass]="{
+                      'bg-yellow-500 text-white': p.role === 'PORTIERE',
+                      'bg-blue-500 text-white': p.role === 'DIFENSORE',
+                      'bg-green-600 text-white': p.role === 'CENTROCAMPISTA',
+                      'bg-red-600 text-white': p.role === 'ATTACCANTE',
+                    }"
+                  >
+                    {{ p.role[0] }}
+                  </span>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-fanta p-6 border border-gray-100 bg-white overflow-hidden shadow-sm">
+      <h3
+        class="font-black text-gray-700 uppercase text-[10px] tracking-[0.2em] flex items-center gap-2 mb-6"
+      >
+        <lucide-icon name="chart-bar" class="w-4 h-4 text-bordeaux"></lucide-icon>
+        Classifica
+      </h3>
+      <div class="overflow-x-auto">
+        <table class="table w-full text-xs whitespace-nowrap">
+          <thead>
+            <tr class="text-gray-400 border-b border-gray-100 uppercase tracking-widest text-[9px]">
+              <th class="w-12 text-center pb-3">Pos</th>
+              <th class="pb-3 text-left">Squadra</th>
+              <th class="pb-3 text-center text-bordeaux font-black">Pt</th>
+              <th class="pb-3 text-center">DR</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (team of ranking(); track team.id; let i = $index) {
+              <tr class="hover:bg-gray-50 border-b border-gray-50 transition-colors group">
+                <td class="text-center font-black text-gray-400 group-hover:text-gray-800">
+                  {{ i + 1 }}°
+                </td>
+                <td class="font-black text-gray-800 text-sm">{{ team.teamName }}</td>
+                <td class="text-center">
+                  <span
+                    class="inline-block px-3 py-1.5 font-black text-bordeaux bg-bordeaux/5 rounded-xl min-w-[40px]"
+                    >{{ team.points }}</span
+                  >
+                </td>
+                <td
+                  class="text-center font-bold"
+                  [ngClass]="
+                    team.goalDifference > 0
+                      ? 'text-green-600'
+                      : team.goalDifference < 0
+                        ? 'text-red-500'
+                        : 'text-gray-400'
+                  "
+                >
+                  {{ team.goalDifference > 0 ? '+' + team.goalDifference : team.goalDifference }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="hidden sm:block h-16 w-full"></div>
+  }
+</div>

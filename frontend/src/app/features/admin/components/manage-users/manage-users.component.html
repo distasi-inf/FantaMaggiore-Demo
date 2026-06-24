@@ -1,0 +1,426 @@
+<section class="card-fanta max-w-none">
+  <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6 border-b pb-4">
+    <h3 class="font-bold text-gray-700 uppercase text-xs tracking-widest flex items-center gap-2">
+      <lucide-icon name="users" class="w-5 h-5 text-bordeaux"></lucide-icon>
+      Gestione Iscritti
+      <span class="badge bg-bordeaux text-white border-none badge-sm ml-2">{{
+        users().length
+      }}</span>
+    </h3>
+
+    <div class="relative w-full md:w-72">
+      <lucide-icon
+        name="search"
+        class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"
+      ></lucide-icon>
+      <input
+        type="text"
+        placeholder="Cerca per nome, team o email..."
+        [value]="searchTerm()"
+        (input)="onSearchChange($event)"
+        class="input-fanta !pl-10 !py-2 text-xs"
+      />
+      @if (searchTerm()) {
+        <button
+          (click)="clearSearch()"
+          class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+        >
+          <lucide-icon name="x" class="w-4 h-4"></lucide-icon>
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mb-4">
+    @for (role of ['TUTTI', 'SUPER_ADMIN', 'ADMIN', 'USER']; track role) {
+      <button
+        (click)="setFilterRole(role)"
+        class="w-full sm:w-auto px-4 py-2 rounded-xl text-[10px] font-bold tracking-wider transition-all shadow-sm"
+        [class.bg-bordeaux]="filterRole() === role"
+        [class.text-white]="filterRole() === role"
+        [class.bg-white]="filterRole() !== role"
+        [class.text-gray-600]="filterRole() !== role"
+        [class.border]="filterRole() !== role"
+      >
+        {{ role === 'USER' ? 'UTENTI' : role }}
+      </button>
+    }
+  </div>
+
+  <div class="space-y-3">
+    @if (isLoading()) {
+      @for (i of [1, 2, 3, 4, 5]; track i) {
+        <div
+          class="bg-white border border-gray-100 p-4 rounded-2xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden"
+        >
+          <div class="flex items-center gap-4 pl-2 w-full md:w-auto">
+            <div class="skeleton w-10 h-10 rounded-full shrink-0 bg-gray-200"></div>
+
+            <div class="flex flex-col gap-2 mt-1">
+              <div class="skeleton h-4 w-40 sm:w-48 bg-gray-200"></div>
+              <div class="skeleton h-3 w-28 sm:w-32 bg-gray-200"></div>
+              <div class="skeleton h-2 w-48 sm:w-56 bg-gray-200 mt-1"></div>
+            </div>
+          </div>
+
+          <div
+            class="flex items-center gap-2 w-full md:w-auto justify-end border-t md:border-t-0 pt-3 md:pt-0 mt-2 md:mt-0"
+          >
+            <div class="skeleton w-8 h-8 rounded-full bg-gray-200"></div>
+            <div class="skeleton w-8 h-8 rounded-full bg-gray-200"></div>
+            <div class="skeleton w-8 h-8 rounded-full bg-gray-200"></div>
+          </div>
+        </div>
+      }
+    } @else {
+      @for (user of users(); track user.id) {
+        <div
+          class="bg-white border border-gray-100 p-4 rounded-2xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:shadow-md transition-all group relative overflow-hidden"
+          [class.opacity-60]="user.locked"
+          [class.bg-gray-50]="user.locked"
+        >
+          @if (user.role === 'SUPER_ADMIN') {
+            <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-purple-500"></div>
+          } @else if (user.role === 'ADMIN') {
+            <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-yellow-400"></div>
+          }
+
+          <div class="flex items-center gap-4 pl-2">
+            <div
+              class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200"
+            >
+              <span class="font-black text-gray-500"
+                >{{ user.name.charAt(0) }}{{ user.surname.charAt(0) }}</span
+              >
+            </div>
+
+            <div>
+              <h4 class="font-black text-gray-800 flex flex-wrap items-start gap-y-1 gap-x-2">
+                {{ user.name }} {{ user.surname }}
+
+                @if (isMe(user)) {
+                  <span class="badge badge-xs bg-bordeaux text-white border-none shadow-sm"
+                    >Tu</span
+                  >
+                }
+
+                @if (user.role === 'SUPER_ADMIN') {
+                  <span
+                    class="badge badge-xs bg-purple-100 text-purple-700 border-none font-bold tracking-wider"
+                    >Super Admin</span
+                  >
+                } @else if (user.role === 'ADMIN') {
+                  <span class="badge badge-xs bg-yellow-100 text-yellow-700 border-none"
+                    >Admin</span
+                  >
+                }
+
+                @if (user.locked) {
+                  <span
+                    class="badge badge-xs bg-red-100 text-red-600 border-none font-bold uppercase tracking-widest text-[8px]"
+                  >
+                    Bannato
+                  </span>
+                }
+              </h4>
+              <p class="text-xs text-bordeaux font-bold mt-0.5">🛡️ {{ user.fantasyTeamName }}</p>
+              <p class="text-[10px] text-gray-400 mt-1 flex items-center gap-2">
+                <span>👤 {{ user.username }}</span> • <span>✉️ {{ user.email }}</span>
+              </p>
+            </div>
+          </div>
+
+          <div
+            class="flex items-center gap-2 w-full md:w-auto justify-end border-t md:border-t-0 pt-3 md:pt-0 mt-2 md:mt-0"
+          >
+            @if (!user.locked) {
+              <button
+                (click)="openEditModal(user)"
+                class="btn btn-sm btn-circle bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border-none"
+                title="Modifica Profilo"
+              >
+                <lucide-icon name="pencil" class="w-4 h-4"></lucide-icon>
+              </button>
+              <button
+                (click)="openPasswordModal(user)"
+                class="btn btn-sm btn-circle bg-yellow-50 text-yellow-600 hover:bg-yellow-500 hover:text-white border-none"
+                title="Forza Reset Password"
+              >
+                <lucide-icon name="key" class="w-4 h-4"></lucide-icon>
+              </button>
+            }
+
+            @if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+              <button
+                (click)="confirmToggleBan(user)"
+                class="btn btn-sm btn-circle border-none transition-all shadow-sm"
+                [ngClass]="
+                  user.locked
+                    ? 'bg-green-100 text-green-600 hover:bg-green-600 hover:text-white'
+                    : 'bg-red-50 text-red-600 hover:bg-red-600 hover:text-white'
+                "
+                [title]="user.locked ? 'Ripristina Utente' : 'Banna Utente'"
+              >
+                <lucide-icon
+                  [name]="user.locked ? 'refresh-ccw' : 'trash'"
+                  class="w-4 h-4"
+                ></lucide-icon>
+              </button>
+            }
+          </div>
+        </div>
+      } @empty {
+        <div
+          class="text-center py-10 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200"
+        >
+          <lucide-icon name="users" class="w-10 h-10 text-gray-300 mx-auto mb-3"></lucide-icon>
+          <p class="text-gray-500 font-bold">Nessun utente trovato</p>
+        </div>
+      }
+    }
+    <div
+      class="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/50 rounded-b-2xl mt-4"
+    >
+      <p class="text-xs text-gray-500 font-medium">
+        Pagina {{ currentPage() + 1 }} di {{ totalPages() || 1 }}
+        <span class="text-gray-400">({{ totalElements() }} iscritti totali)</span>
+      </p>
+
+      <div class="flex gap-2">
+        <button
+          (click)="prevPage()"
+          [disabled]="currentPage() === 0"
+          class="btn btn-sm btn-ghost bg-white border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-50 shadow-sm"
+        >
+          <lucide-icon name="chevron-left" class="w-4 h-4"></lucide-icon> Precedente
+        </button>
+        <button
+          (click)="nextPage()"
+          [disabled]="currentPage() >= totalPages() - 1"
+          class="btn btn-sm btn-ghost bg-white border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-50 shadow-sm"
+        >
+          Successivo <lucide-icon name="chevron-right" class="w-4 h-4"></lucide-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<app-fanta-modal
+  [isOpen]="isEditModalOpen()"
+  [title]="isMe(selectedUser()) ? 'Il Tuo Profilo' : 'Modifica Utente'"
+  (closed)="closeEditModal()"
+  size="md"
+>
+  <p class="text-xs text-gray-500 -mt-2 mb-4">Stai modificando {{ selectedUser()?.email }}</p>
+  <form [formGroup]="editForm" (ngSubmit)="submitEdit()" class="space-y-4">
+    @if (selectedUser() && !isMe(selectedUser())) {
+      @if (selectedUser()?.role === 'SUPER_ADMIN') {
+        <div
+          class="col-span-2 bg-purple-50 text-purple-700 p-3 rounded-xl border border-purple-200 text-[10px] leading-relaxed"
+        >
+          <lucide-icon name="shield-alert" class="w-4 h-4 inline mr-1"></lucide-icon>
+          <b>Sistema Protetto:</b> I dati di un Super Amministratore non possono essere modificati
+          da nessuno.
+        </div>
+      } @else if (selectedUser()?.role === 'ADMIN' && !amISuperAdmin()) {
+        <div
+          class="col-span-2 bg-yellow-50 text-yellow-700 p-3 rounded-xl border border-yellow-200 text-[10px] leading-relaxed"
+        >
+          <lucide-icon name="shield-alert" class="w-4 h-4 inline mr-1"></lucide-icon>
+          <b>Modalità Protetta:</b> Non hai i permessi per modificare o declassare un tuo pari
+          grado. Solo il Super Admin può farlo.
+        </div>
+      }
+    }
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="label-fanta">Nome</label>
+        <input
+          type="text"
+          formControlName="name"
+          class="input-fanta disabled:bg-gray-100 disabled:opacity-60"
+        />
+      </div>
+      <div>
+        <label class="label-fanta">Cognome</label>
+        <input
+          type="text"
+          formControlName="surname"
+          class="input-fanta disabled:bg-gray-100 disabled:opacity-60"
+        />
+      </div>
+    </div>
+    <div>
+      <label class="label-fanta">Username</label>
+      <input
+        type="text"
+        formControlName="username"
+        class="input-fanta disabled:bg-gray-100 disabled:opacity-60"
+      />
+    </div>
+    <div>
+      <label class="label-fanta">Nome Fanta-Squadra</label>
+      <input
+        type="text"
+        formControlName="fantasyTeamName"
+        class="input-fanta text-bordeaux font-bold disabled:bg-gray-100 disabled:opacity-60"
+      />
+    </div>
+
+    <div>
+      <label class="label-fanta">Indirizzo Email</label>
+      <input
+        type="email"
+        formControlName="email"
+        class="input-fanta disabled:bg-gray-100 disabled:opacity-60"
+      />
+    </div>
+
+    <div>
+      <label class="label-fanta">Ruolo Utente</label>
+
+      @if (editForm.get('role')?.disabled) {
+        <div
+          class="input-fanta flex justify-between items-center bg-gray-100 opacity-60 cursor-not-allowed"
+        >
+          <span
+            class="font-bold text-xs"
+            [ngClass]="
+              editForm.get('role')?.value === 'SUPER_ADMIN' ? 'text-purple-600' : 'text-yellow-600'
+            "
+          >
+            {{ editForm.get('role')?.value === 'SUPER_ADMIN' ? 'SUPER ADMIN' : 'AMMINISTRATORE' }}
+          </span>
+          <lucide-icon name="lock" class="w-4 h-4 text-gray-500"></lucide-icon>
+        </div>
+        <p class="text-[9px] text-gray-400 mt-1.5 italic leading-tight">
+          * I permessi o le regole di sicurezza impediscono la modifica di questo ruolo.
+        </p>
+      } @else {
+        <div class="dropdown w-full">
+          <div
+            tabindex="0"
+            role="button"
+            class="input-fanta flex justify-between items-center bg-white focus:ring-bordeaux focus:border-bordeaux"
+          >
+            <span
+              class="font-bold text-xs"
+              [ngClass]="
+                editForm.get('role')?.value === 'ADMIN' ? 'text-yellow-600' : 'text-gray-800'
+              "
+            >
+              {{ editForm.get('role')?.value === 'ADMIN' ? 'AMMINISTRATORE' : 'UTENTE SEMPLICE' }}
+            </span>
+            <lucide-icon name="chevron-down" class="w-4 h-4 text-gray-400"></lucide-icon>
+          </div>
+          <ul
+            tabindex="0"
+            class="dropdown-content z-[100] menu p-2 shadow-2xl bg-white rounded-xl w-full mt-2 border border-gray-100 max-h-60 overflow-y-auto block [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          >
+            <li class="mb-1">
+              <a
+                onclick="document.activeElement.blur()"
+                (click)="editForm.patchValue({ role: 'USER' })"
+                class="p-3 rounded-lg font-bold text-xs transition-colors hover:bg-gray-100"
+                [class.bg-gray-100]="editForm.get('role')?.value === 'USER'"
+              >
+                <span class="text-gray-800">UTENTE SEMPLICE</span>
+              </a>
+            </li>
+            <li class="mb-1">
+              <a
+                onclick="document.activeElement.blur()"
+                (click)="editForm.patchValue({ role: 'ADMIN' })"
+                class="p-3 rounded-lg font-bold text-xs transition-colors hover:bg-yellow-50"
+                [class.bg-yellow-50]="editForm.get('role')?.value === 'ADMIN'"
+              >
+                <span class="text-yellow-700">AMMINISTRATORE</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      }
+    </div>
+
+    <div class="flex flex-col-reverse sm:flex-row gap-2 mt-6 pt-4 border-t border-gray-100">
+      <button type="button" (click)="closeEditModal()" class="btn btn-ghost text-gray-500 flex-1">
+        Annulla
+      </button>
+      <button
+        type="submit"
+        [disabled]="editForm.invalid || editForm.disabled"
+        class="btn bg-bordeaux text-white border-none hover:bg-red-900 disabled:bg-gray-200 flex-1"
+      >
+        Salva Modifiche
+      </button>
+    </div>
+  </form>
+</app-fanta-modal>
+
+<app-fanta-modal
+  [isOpen]="isPasswordModalOpen()"
+  title="Reset Password"
+  (closed)="closePasswordModal()"
+  size="sm"
+>
+  <form [formGroup]="passwordForm" (ngSubmit)="submitPasswordReset()" class="space-y-4">
+    <p class="text-xs text-gray-500">
+      Imposta una nuova password per <b>{{ selectedUser()?.username }}</b
+      >.
+    </p>
+    <div>
+      <label class="label-fanta">Nuova Password</label>
+      <input
+        type="text"
+        formControlName="newPassword"
+        placeholder="Minimo 6 caratteri"
+        class="input-fanta"
+      />
+    </div>
+    <div class="flex flex-col-reverse sm:flex-row gap-2 pt-2">
+      <button
+        type="button"
+        (click)="closePasswordModal()"
+        class="btn btn-ghost text-gray-500 flex-1"
+      >
+        Annulla
+      </button>
+      <button
+        type="submit"
+        [disabled]="passwordForm.invalid"
+        class="btn bg-yellow-500 text-white border-none hover:bg-yellow-600 shadow-md flex-1"
+      >
+        Forza Reset
+      </button>
+    </div>
+  </form>
+</app-fanta-modal>
+
+<app-fanta-modal
+  [isOpen]="isConfirmModalOpen()"
+  [title]="confirmTitle()"
+  (closed)="closeConfirm()"
+  size="sm"
+  [disableBackdropClose]="true"
+>
+  <p class="text-sm text-gray-600 mb-6">{{ confirmMessage() }}</p>
+  <div class="flex flex-col-reverse sm:flex-row gap-2">
+    <button
+      (click)="closeConfirm()"
+      class="btn btn-ghost bg-gray-100 text-gray-600 border-none flex-1"
+    >
+      Annulla
+    </button>
+    <button
+      (click)="executeConfirm()"
+      class="btn border-none text-white shadow-md flex-1"
+      [ngClass]="
+        selectedUser()?.locked ? 'bg-green-600 hover:bg-green-800' : 'bg-red-600 hover:bg-red-800'
+      "
+    >
+      {{ selectedUser()?.locked ? 'Sblocca ora' : 'Sì, procedi' }}
+    </button>
+  </div>
+</app-fanta-modal>

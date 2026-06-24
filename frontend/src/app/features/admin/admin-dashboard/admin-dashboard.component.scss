@@ -1,0 +1,51 @@
+:host {
+  display: block;
+}
+
+.text-bordeaux {
+  color: #800020;
+}
+.bg-bordeaux {
+  background-color: #800020;
+}
+
+// Animazione fluida
+.animate-in {
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Stile pulsanti Sidebar
+nav button {
+  outline: none !important;
+  border: none !important;
+
+  span {
+    transition: transform 0.2s ease;
+  }
+
+  &:hover span {
+    transform: translateX(4px);
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+// FIX PER MOBILE: Evita che la Nav Globale copra quella Admin
+@media (max-width: 768px) {
+  main {
+    padding-bottom: 120px; // Spazio per la nav admin + eventuale nav globale residua
+  }
+}

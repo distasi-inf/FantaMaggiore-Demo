@@ -1,0 +1,28 @@
+<svg width="200" height="240" viewBox="0 0 200 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="playerGrad" x1="0" y1="0" x2="200" y2="240" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#800020" />
+      <stop offset="1" stop-color="#334155" />
+    </linearGradient>
+    
+    <linearGradient id="speedGrad" x1="0" y1="0" x2="100" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#cbd5e1" stop-opacity="0"/>
+      <stop offset="1" stop-color="#cbd5e1" stop-opacity="0.6"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="10" y="40" width="60" height="4" rx="2" fill="url(#speedGrad)"/>
+  <rect x="20" y="100" width="50" height="4" rx="2" fill="url(#speedGrad)"/>
+  <rect x="5" y="160" width="70" height="4" rx="2" fill="url(#speedGrad)"/>
+  <rect x="30" y="210" width="40" height="4" rx="2" fill="url(#speedGrad)"/>
+
+  <circle cx="170" cy="180" r="14" fill="#F8FAFC" />
+  <path d="M165 166 L175 194 M156 180 L184 180" stroke="#CBD5E1" stroke-width="2"/>
+
+  <circle cx="120" cy="40" r="20" fill="url(#playerGrad)" />
+
+  <path d="M100 70 C 130 70 140 90 135 120 L 120 160 L 150 190 L 135 205 L 100 170 L 85 220 L 65 210 L 85 140 C 85 100 70 90 60 110 L 45 100 C 60 70 80 70 100 70 Z" fill="url(#playerGrad)" />
+  
+  <path d="M125 80 L 160 100 L 150 120 L 120 100 Z" fill="url(#playerGrad)" />
+  <path d="M95 85 L 60 70 L 50 85 L 85 105 Z" fill="url(#playerGrad)" />
+</svg>

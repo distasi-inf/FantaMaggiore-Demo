@@ -1,0 +1,83 @@
+<div class="min-h-screen bg-gray-50 flex flex-col md:flex-row overflow-visible">
+  <aside
+    class="hidden md:flex w-72 bg-gray-900 text-white flex-col sticky top-0 h-screen shadow-2xl z-40 self-start"
+  >
+    <div class="p-8">
+      <div class="flex items-center gap-3 mb-2">
+        <div
+          class="w-10 h-10 bg-bordeaux rounded-xl flex items-center justify-center shadow-lg shadow-bordeaux/20"
+        >
+          <lucide-icon name="shield-check" class="w-6 h-6 text-white"></lucide-icon>
+        </div>
+        <h2 class="text-xl font-black tracking-tighter text-white uppercase">
+          Admin <span class="text-bordeaux">Panel</span>
+        </h2>
+      </div>
+      <p class="text-[10px] text-gray-500 font-bold tracking-widest uppercase ml-1">
+        FantaMaggiore Regia
+      </p>
+    </div>
+
+    <nav class="flex-1 px-4 space-y-2 mt-4">
+      @for (item of menuItems; track item.id) {
+        <a
+          [routerLink]="['/admin', item.id]"
+          routerLinkActive="!bg-bordeaux !text-white shadow-lg"
+          class="w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl font-bold text-sm transition-all group hover:bg-gray-800"
+        >
+          <lucide-icon
+            [name]="item.icon"
+            class="w-5 h-5 opacity-70 group-hover:opacity-100"
+          ></lucide-icon>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+  </aside>
+
+  <main class="flex-1 flex flex-col min-w-0 bg-gray-50">
+    <app-header
+      [title]="getPageTitle()"
+      [iconName]="getPageIcon()"
+      subtitle="Regia FantaMaggiore"
+      [showAdminButton]="false"
+      class="sticky top-0 z-[100] block w-full shadow-sm"
+    >
+      <div extra class="flex items-center gap-2">
+        @if (amISuperAdmin()) {
+          <button
+            (click)="openLogs()"
+            class="w-10 h-10 bg-white rounded-2xl flex items-center justify-center border border-indigo-100 text-indigo-600 hover:bg-indigo-100 transition-all active:scale-95"
+          >
+            <lucide-icon name="clipboard-list" class="w-5 h-5"></lucide-icon>
+          </button>
+        }
+        <button
+          (click)="goToUserApp()"
+          class="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-md border border-gray-100 text-bordeaux hover:bg-gray-50 active:scale-95 transition-all"
+        >
+          <lucide-icon name="house" class="w-5 h-5"></lucide-icon>
+        </button>
+      </div>
+    </app-header>
+
+    <div class="p-4 sm:p-6 md:p-10 flex-1 animate-in pb-32">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+
+  <nav
+    class="md:hidden fixed bottom-0 left-0 w-full bg-gray-900 border-t border-gray-800 flex justify-around items-center h-16 sm:h-20 px-2 z-[2000] shadow-[0_-10px_40px_rgba(0,0,0,0.3)] rounded-t-[2rem] pb-[env(safe-area-inset-bottom)] transform-gpu translate-z-0"
+  >
+    @for (item of menuItems; track item.id) {
+      <a
+        [routerLink]="['/admin', item.id]"
+        routerLinkActive="!text-bordeaux !bg-white/5"
+        class="flex flex-col items-center justify-center flex-1 h-full rounded-2xl transition-all text-gray-500"
+      >
+        <lucide-icon [name]="item.icon" class="w-5 h-5 sm:w-6 sm:h-6"></lucide-icon>
+        <span class="text-[9px] font-black uppercase mt-1 tracking-tighter">{{ item.label }}</span>
+      </a>
+    }
+  </nav>
+</div>

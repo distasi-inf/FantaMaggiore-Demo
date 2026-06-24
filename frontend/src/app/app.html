@@ -1,0 +1,61 @@
+<router-outlet />
+
+@if ((authService.currentUser$ | async) && !hideGlobalNavbar) {
+  <app-navbar />
+}
+
+<ngx-sonner-toaster position="top-center" [richColors]="true" />
+
+<!-- 🔥 FIX SCHERMATA DI CARICAMENTO: mostrata fino a quando il server non risponde.
+     Viene nascosta da app.ts non appena isAppReady diventa true. -->
+@if (!isAppReady()) {
+  <div
+    class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#f5f4f0]"
+    aria-label="Caricamento..."
+  >
+    <!-- Logo / icona -->
+    <div class="flex flex-col items-center gap-6">
+      <div class="relative">
+        <div
+          class="w-20 h-20 rounded-3xl bg-bordeaux flex items-center justify-center shadow-2xl shadow-bordeaux/40 relative z-10"
+        >
+          <img src="icons/icon-192x192.png" alt="Logo" class="w-14 h-14 object-contain" />
+        </div>
+        <span
+          class="absolute -inset-1 rounded-[28px] border-2 border-bordeaux/30 animate-ping z-0"
+        ></span>
+      </div>
+
+      <div class="flex flex-col items-center gap-1">
+        <p class="font-black text-lg text-gray-900 tracking-tight">
+          Fanta<span class="text-bordeaux">Maggiore</span>
+        </p>
+        <p class="text-xs text-gray-400 font-medium">Connessione al server in corso...</p>
+      </div>
+
+      <!-- Barra di caricamento animata -->
+      <div class="w-48 h-1 bg-gray-200 rounded-full overflow-hidden">
+        <div
+          class="h-full bg-bordeaux rounded-full animate-[loading_1.4s_ease-in-out_infinite]"
+        ></div>
+      </div>
+    </div>
+  </div>
+}
+
+<style>
+  @keyframes loading {
+    0% {
+      width: 0%;
+      margin-left: 0%;
+    }
+    50% {
+      width: 70%;
+      margin-left: 15%;
+    }
+    100% {
+      width: 0%;
+      margin-left: 100%;
+    }
+  }
+</style>

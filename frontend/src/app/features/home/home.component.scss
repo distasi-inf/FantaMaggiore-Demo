@@ -1,0 +1,71 @@
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.carousel-btn {
+  position: absolute;
+  top: 55%;
+  transform: translateY(-50%);
+  z-index: 30;
+  background: white;
+  padding: 0.6rem;
+  border-radius: 9999px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f3f4f6;
+  opacity: 0;
+  transition: all 0.2s ease;
+  align-items: center;
+  justify-content: center;
+
+  /* Di default le frecce sono NASCOSTE (per i telefoni veri senza mouse) */
+  display: none;
+
+  &:hover {
+    background: #f9fafb;
+    transform: translateY(-50%) scale(1.1);
+  }
+}
+
+/* LA MAGIA: Se il dispositivo usa un mouse (anche se la finestra è minuscola), mostra le frecce */
+@media (pointer: fine) {
+  .carousel-btn {
+    display: flex;
+  }
+}
+
+/* Mostra le frecce solo quando passi col mouse sul gruppo del carosello */
+.group:hover .carousel-btn {
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .snap-center {
+    width: 85% !important;
+    &.sm\:w-\[260px\] {
+      width: 75% !important;
+    }
+  }
+}
+
+@media (min-width: 641px) {
+  .snap-center {
+    width: 320px !important;
+    &.sm\:w-\[260px\] {
+      width: 260px !important;
+    }
+  }
+}
+
+.scroll-smooth {
+  scroll-behavior: smooth;
+}
+
+// Cursore standard per evitare confusione
+#matchCarousel,
+#betCarousel {
+  cursor: default;
+}

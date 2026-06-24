@@ -1,0 +1,32 @@
+@if (isOpen) {
+  <div
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9000] flex items-center justify-center p-4 animate-in fade-in duration-200"
+    (click)="onBackdropClick()"
+  >
+    <div
+      class="bg-white rounded-3xl shadow-2xl w-full max-h-[90vh] flex flex-col relative animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200 overflow-hidden"
+      [ngClass]="sizeClass"
+      (click)="$event.stopPropagation()"
+    >
+      @if (title) {
+        <div
+          class="flex items-center justify-between p-6 border-b border-gray-100 bg-white shrink-0 z-10"
+        >
+          <h2 class="text-lg font-black uppercase tracking-tight text-gray-800">{{ title }}</h2>
+          <button
+            (click)="close()"
+            class="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+          >
+            <lucide-icon name="x" class="w-4 h-4 text-gray-600"></lucide-icon>
+          </button>
+        </div>
+      }
+
+      <div class="flex-1 overflow-y-auto no-scrollbar w-full relative">
+        <div class="p-6">
+          <ng-content></ng-content>
+        </div>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,46 @@
+<header class="bg-white px-4 pt-5 pb-4 shadow-sm sticky top-0 z-50 border-b border-gray-100">
+  <div class="flex flex-col gap-3 w-full max-w-5xl mx-auto">
+    <div class="flex items-center justify-between w-full gap-2">
+      <div class="flex items-center gap-2.5 min-w-0 flex-1">
+        @if (iconName) {
+          <div
+            class="w-10 h-10 rounded-2xl bg-bordeaux flex items-center justify-center shadow-md shadow-bordeaux/30 shrink-0"
+          >
+            <lucide-icon [name]="iconName" class="w-4.5 h-4.5 text-white"></lucide-icon>
+          </div>
+        }
+        <div class="min-w-0 flex-1">
+          <h1
+            class="text-base sm:text-lg font-black uppercase tracking-tight text-gray-900 leading-tight truncate"
+          >
+            <ng-content select="[custom-title]">{{ title }}</ng-content>
+          </h1>
+          <div class="mt-0.5">
+            <ng-content select="[custom-subtitle]">
+              @if (subtitle) {
+                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest truncate">
+                  {{ subtitle }}
+                </p>
+              }
+            </ng-content>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5 shrink-0">
+        <ng-content select="[extra]"></ng-content>
+
+        @if (showAdminButton && authService.isAdmin()) {
+          <a
+            routerLink="/admin/days"
+            class="w-9 h-9 rounded-xl bg-bordeaux/10 text-bordeaux border border-bordeaux/20 flex items-center justify-center hover:bg-bordeaux hover:text-white transition-all shadow-sm active:scale-95 ml-0.5"
+          >
+            <lucide-icon name="shield-check" class="w-4.5 h-4.5"></lucide-icon>
+          </a>
+        }
+      </div>
+    </div>
+
+    <ng-content select="[bottom]"></ng-content>
+  </div>
+</header>

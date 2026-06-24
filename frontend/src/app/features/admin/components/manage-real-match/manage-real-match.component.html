@@ -1,0 +1,709 @@
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  <section class="card-fanta max-w-none">
+    <h3 class="font-bold text-gray-700 uppercase text-[10px] tracking-widest mb-4 border-b pb-2">
+      <lucide-icon name="plus" class="w-4 h-4 mr-1 inline"></lucide-icon>
+      {{ editingTeamId() ? 'Modifica Squadra Reale' : 'Nuova Squadra Reale' }}
+    </h3>
+
+    <form [formGroup]="teamForm" (ngSubmit)="onSubmitTeam()" class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <div>
+          <label class="label-fanta">Nome Squadra</label>
+          <input
+            type="text"
+            formControlName="teamName"
+            class="input-fanta h-10"
+            placeholder="Es. Real Madrid"
+          />
+        </div>
+
+        <div class="flex flex-col">
+          <label class="label-fanta">Giornata</label>
+          <div class="dropdown w-full">
+            <div
+              tabindex="0"
+              role="button"
+              class="input-fanta flex justify-between items-center bg-white text-gray-800 focus:ring-bordeaux focus:border-bordeaux"
+            >
+              @if (teamForm.get('idMatchDay')?.value; as selectedId) {
+                <span class="font-bold text-xs">{{ getMatchDayDesc(selectedId) }}</span>
+              } @else {
+                <span class="text-gray-400 font-normal text-xs">Seleziona...</span>
+              }
+              <lucide-icon name="chevron-down" class="w-4 h-4 text-gray-400"></lucide-icon>
+            </div>
+            <ul
+              tabindex="0"
+              class="dropdown-content z-[1] menu p-2 shadow-2xl bg-white rounded-xl w-full mt-2 border border-gray-100 max-h-60 overflow-y-auto block"
+            >
+              <li class="mb-1">
+                <a
+                  onclick="document.activeElement.blur()"
+                  (click)="setTeamMatchDay(null)"
+                  class="text-gray-400 p-3 rounded-lg font-normal text-xs transition-colors italic"
+                  >Deseleziona Giornata</a
+                >
+              </li>
+              @for (md of matchDays(); track md.id) {
+                <li class="mb-1">
+                  <a
+                    onclick="document.activeElement.blur()"
+                    (click)="setTeamMatchDay(md.id)"
+                    class="hover:bg-bordeaux hover:text-white p-3 rounded-lg font-bold text-xs transition-colors"
+                  >
+                    {{ md.description }}
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label class="label-fanta">
+          Giocatori Convocati
+          <span class="text-[9px] font-normal text-gray-400 ml-1">(da 4 a 5 giocatori)</span>
+        </label>
+        <div
+          class="flex items-center gap-4 bg-white p-3 rounded-lg border"
+          [class.border-red-300]="
+            teamForm.value.playerIds?.length > 0 &&
+            (teamForm.value.playerIds?.length < 4 || teamForm.value.playerIds?.length > 5)
+          "
+          [class.border-green-300]="
+            teamForm.value.playerIds?.length === 4 || teamForm.value.playerIds?.length === 5
+          "
+          [class.border-gray-300]="teamForm.value.playerIds?.length === 0"
+        >
+          <div class="flex-1">
+            <span
+              class="text-sm font-bold"
+              [class.text-red-500]="
+                teamForm.value.playerIds?.length > 0 &&
+                (teamForm.value.playerIds?.length < 4 || teamForm.value.playerIds?.length > 5)
+              "
+              [class.text-green-600]="
+                teamForm.value.playerIds?.length === 4 || teamForm.value.playerIds?.length === 5
+              "
+              [class.text-gray-700]="teamForm.value.playerIds?.length === 0"
+            >
+              <b class="text-bordeaux">{{ teamForm.value.playerIds?.length || 0 }}</b> selezionati
+              @if (teamForm.value.playerIds?.length > 0 && teamForm.value.playerIds?.length < 4) {
+                <span class="text-red-400 text-[10px] ml-1">(minimo 4 richiesti)</span>
+              }
+            </span>
+          </div>
+          <button
+            type="button"
+            (click)="openPlayersModal()"
+            class="btn btn-sm bg-bordeaux text-white hover:bg-bordeaux-dark border-none shadow-sm"
+          >
+            <lucide-icon name="users" class="w-4 h-4 mr-1"></lucide-icon> Gestisci Rosa
+          </button>
+        </div>
+      </div>
+
+      <div class="flex flex-col">
+        <label class="label-fanta">Capitano (Opzionale)</label>
+        <div class="dropdown w-full">
+          <div
+            tabindex="0"
+            role="button"
+            class="input-fanta flex justify-between items-center bg-white text-gray-800 focus:ring-bordeaux focus:border-bordeaux"
+          >
+            @if (teamForm.get('idCaptain')?.value; as selectedCap) {
+              <span class="font-bold text-xs">{{ getCaptainName(selectedCap) }}</span>
+            } @else {
+              <span class="text-gray-400 font-normal text-xs">Nessun capitano...</span>
+            }
+            <lucide-icon name="chevron-down" class="w-4 h-4 text-gray-400"></lucide-icon>
+          </div>
+          <ul
+            tabindex="0"
+            class="dropdown-content z-[100] menu p-2 shadow-2xl bg-white rounded-xl w-full mt-2 border border-gray-100 max-h-60 overflow-y-auto block"
+          >
+            <li class="mb-1">
+              <a
+                onclick="document.activeElement.blur()"
+                (click)="setCaptain(null)"
+                class="text-gray-400 p-3 rounded-lg font-normal text-xs transition-colors italic"
+                >Rimuovi Capitano</a
+              >
+            </li>
+            @for (p of allPlayers(); track p.id) {
+              @if (
+                teamForm.value.playerIds?.includes(p.id) ||
+                teamForm.value.playerIds?.includes(p.id.toString())
+              ) {
+                <li class="mb-1">
+                  <a
+                    onclick="document.activeElement.blur()"
+                    (click)="setCaptain(p.id)"
+                    class="hover:bg-bordeaux hover:text-white p-3 rounded-lg font-bold text-xs transition-colors"
+                  >
+                    {{ p.name }} {{ p.surname }}
+                  </a>
+                </li>
+              }
+            }
+          </ul>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        @if (editingTeamId()) {
+          <button
+            type="button"
+            (click)="cancelEditTeam()"
+            class="btn bg-gray-200 border-none hover:bg-gray-300 text-gray-700 font-bold w-1/3"
+          >
+            Annulla
+          </button>
+        }
+        <button
+          type="submit"
+          [disabled]="
+            teamForm.invalid ||
+            teamForm.value.playerIds?.length < 4 ||
+            teamForm.value.playerIds?.length > 5
+          "
+          class="btn-fanta flex-1"
+        >
+          {{ editingTeamId() ? 'Aggiorna Squadra' : 'Salva Squadra' }}
+        </button>
+      </div>
+    </form>
+
+    <div class="mt-6 border-t pt-4">
+      <h4 class="font-bold text-gray-500 uppercase text-[9px] mb-3">
+        @if (teamForm.value.idMatchDay) {
+          Squadre di questa giornata
+        } @else {
+          Seleziona una giornata per vedere le squadre
+        }
+      </h4>
+      <div class="space-y-2">
+        @if (isLoadingTeams()) {
+          <div
+            class="space-y-3 max-h-[50vh] overflow-y-auto pb-4 hide-scroll"
+            style="scrollbar-width: none"
+          >
+            @for (i of [1, 2, 3]; track i) {
+              <div
+                class="relative bg-white border border-gray-100 p-4 rounded-2xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4"
+              >
+                <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-gray-200"></div>
+                <div class="flex items-center gap-4 pl-2 w-full">
+                  <div class="skeleton w-10 h-10 rounded-full bg-gray-200 shrink-0"></div>
+                  <div class="flex-1">
+                    <div class="skeleton h-5 w-32 bg-gray-200 mb-2"></div>
+                    <div class="flex gap-2">
+                      <div class="skeleton h-4 w-20 bg-gray-200 rounded-md"></div>
+                      <div class="skeleton h-4 w-12 bg-gray-200 rounded-md"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else if (teamsForSelectedMatchDay().length > 0) {
+          <div
+            class="space-y-3 max-h-[50vh] overflow-y-auto pb-4 hide-scroll"
+            style="scrollbar-width: none"
+          >
+            @for (team of teamsForSelectedMatchDay(); track team.id) {
+              <div
+                class="relative bg-white border border-gray-100 p-4 rounded-2xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-all group overflow-hidden"
+                (click)="openTeamDetail(team)"
+              >
+                <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-bordeaux"></div>
+
+                <div class="flex items-center gap-4 pl-2">
+                  <div
+                    class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center border border-gray-200 shrink-0 group-hover:bg-bordeaux/10 transition-colors"
+                  >
+                    <lucide-icon name="shirt" class="w-5 h-5 text-bordeaux"></lucide-icon>
+                  </div>
+
+                  <div>
+                    <h4 class="font-black text-gray-800 text-lg uppercase tracking-tight">
+                      {{ team.teamName }}
+                    </h4>
+
+                    <div
+                      class="flex items-center gap-3 mt-1 text-[10px] font-bold uppercase tracking-widest text-gray-500"
+                    >
+                      <span
+                        class="flex items-center gap-1 text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-md border border-yellow-200"
+                      >
+                        <lucide-icon name="copyright" class="w-3 h-3"></lucide-icon>
+                        {{ getCaptainName(team.idCaptain) || 'Nessuno' }}
+                      </span>
+                      <span class="flex items-center gap-1">
+                        <lucide-icon name="users" class="w-3 h-3"></lucide-icon>
+                        {{ team.playerIds?.length || 0 }}/5
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                @if (getMatchDayStatus(currentMatchDayId()) === 'OPEN') {
+                  <div
+                    class="flex items-center gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 ml-auto z-10"
+                  >
+                    <button
+                      (click)="editTeam(team, $event)"
+                      class="btn btn-sm btn-circle bg-blue-50 border border-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white shadow-sm"
+                      title="Modifica squadra"
+                    >
+                      <lucide-icon name="pencil" class="w-4 h-4"></lucide-icon>
+                    </button>
+
+                    <button
+                      (click)="deleteTeam(team.id, $event)"
+                      class="btn btn-sm btn-circle bg-red-50 border border-red-100 text-red-600 hover:bg-red-600 hover:text-white shadow-sm"
+                      title="Elimina squadra"
+                    >
+                      <lucide-icon name="trash" class="w-4 h-4"></lucide-icon>
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        } @else if (teamForm.value.idMatchDay) {
+          <p
+            class="text-center text-sm font-bold uppercase tracking-widest text-gray-400 py-8 border-2 border-dashed border-gray-200 rounded-2xl"
+          >
+            Nessuna squadra creata
+          </p>
+        } @else {
+          <p class="text-gray-300 text-xs text-center py-3">—</p>
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="card-fanta max-w-none">
+    <h3 class="font-bold text-gray-700 uppercase text-[10px] tracking-widest mb-4 border-b pb-2">
+      <lucide-icon name="handshake" class="w-4 h-4 mr-1 inline"></lucide-icon> Nuova Partita Reale
+    </h3>
+    <form [formGroup]="matchForm" (ngSubmit)="onSubmitMatch()" class="space-y-4">
+      <div class="flex flex-col">
+        <label class="label-fanta">Seleziona la Giornata</label>
+        <div class="dropdown w-full">
+          <div
+            tabindex="0"
+            role="button"
+            class="input-fanta flex justify-between items-center bg-white text-bordeaux font-bold focus:ring-bordeaux focus:border-bordeaux"
+          >
+            @if (matchForm.get('matchDayId')?.value; as selectedId) {
+              <span class="text-xs">{{ getMatchDayDesc(selectedId) }}</span>
+            } @else {
+              <span class="text-gray-400 font-normal text-xs">Scegli la giornata...</span>
+            }
+            <lucide-icon name="chevron-down" class="w-4 h-4 text-gray-400"></lucide-icon>
+          </div>
+          <ul
+            tabindex="0"
+            class="dropdown-content z-[1] menu p-2 shadow-2xl bg-white rounded-xl w-full mt-2 border border-gray-100 max-h-60 overflow-y-auto block"
+          >
+            <li class="mb-1">
+              <a
+                onclick="document.activeElement.blur()"
+                (click)="setMatchMatchDay(null)"
+                class="text-gray-400 p-3 rounded-lg font-normal text-xs transition-colors italic"
+                >Deseleziona Giornata</a
+              >
+            </li>
+            @for (md of matchDays(); track md.id) {
+              <li class="mb-1">
+                <a
+                  onclick="document.activeElement.blur()"
+                  (click)="setMatchMatchDay(md.id)"
+                  class="hover:bg-bordeaux hover:text-white p-3 rounded-lg font-bold text-xs transition-colors"
+                >
+                  {{ md.description }}
+                </a>
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="flex flex-col">
+          <label class="label-fanta">Squadra Casa</label>
+          <div class="dropdown w-full">
+            <div
+              tabindex="0"
+              role="button"
+              class="input-fanta flex justify-between items-center bg-white text-gray-800 focus:ring-bordeaux focus:border-bordeaux"
+            >
+              @if (matchForm.get('homeTeamId')?.value; as homeId) {
+                <span class="font-bold text-xs">{{ getTeamName(homeId) }}</span>
+              } @else {
+                <span class="text-gray-400 font-normal text-xs">Scegli Team...</span>
+              }
+              <lucide-icon name="chevron-down" class="w-4 h-4 text-gray-400"></lucide-icon>
+            </div>
+            <ul
+              tabindex="0"
+              class="dropdown-content z-[1] menu p-2 shadow-2xl bg-white rounded-xl w-full mt-2 border border-gray-100 max-h-60 overflow-y-auto block"
+            >
+              <li class="mb-1">
+                <a
+                  onclick="document.activeElement.blur()"
+                  (click)="setHomeTeam(null)"
+                  class="text-gray-400 p-3 rounded-lg font-normal text-xs transition-colors italic"
+                  >Rimuovi Selezione</a
+                >
+              </li>
+              @for (team of availableHomeTeams(); track team.id) {
+                <li class="mb-1">
+                  <a
+                    onclick="document.activeElement.blur()"
+                    (click)="setHomeTeam(team.id)"
+                    class="hover:bg-bordeaux hover:text-white p-3 rounded-lg font-bold text-xs transition-colors"
+                  >
+                    {{ team.teamName }}
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        </div>
+
+        <div class="flex flex-col">
+          <label class="label-fanta">Squadra Trasferta</label>
+          <div class="dropdown w-full">
+            <div
+              tabindex="0"
+              role="button"
+              class="input-fanta flex justify-between items-center bg-white text-gray-800 focus:ring-bordeaux focus:border-bordeaux"
+            >
+              @if (matchForm.get('awayTeamId')?.value; as awayId) {
+                <span class="font-bold text-xs">{{ getTeamName(awayId) }}</span>
+              } @else {
+                <span class="text-gray-400 font-normal text-xs">Scegli Team...</span>
+              }
+              <lucide-icon name="chevron-down" class="w-4 h-4 text-gray-400"></lucide-icon>
+            </div>
+            <ul
+              tabindex="0"
+              class="dropdown-content z-[1] menu p-2 shadow-2xl bg-white rounded-xl w-full mt-2 border border-gray-100 max-h-60 overflow-y-auto block"
+            >
+              <li class="mb-1">
+                <a
+                  onclick="document.activeElement.blur()"
+                  (click)="setAwayTeam(null)"
+                  class="text-gray-400 p-3 rounded-lg font-normal text-xs transition-colors italic"
+                  >Rimuovi Selezione</a
+                >
+              </li>
+              @for (team of availableAwayTeams(); track team.id) {
+                <li class="mb-1">
+                  <a
+                    onclick="document.activeElement.blur()"
+                    (click)="setAwayTeam(team.id)"
+                    class="hover:bg-bordeaux hover:text-white p-3 rounded-lg font-bold text-xs transition-colors"
+                  >
+                    {{ team.teamName }}
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" [disabled]="matchForm.invalid" class="btn-fanta">
+        Programma Match
+      </button>
+    </form>
+
+    <div class="mt-8 border-t border-gray-200 pt-6">
+      <h4
+        class="font-bold text-gray-500 uppercase text-[10px] tracking-widest mb-4 flex items-center gap-2"
+      >
+        <lucide-icon name="swords" class="w-4 h-4 text-bordeaux"></lucide-icon>
+        Match programmati
+      </h4>
+
+      @if (isLoadingMatches()) {
+        <div
+          class="space-y-3 max-h-[50vh] overflow-y-auto pb-4 hide-scroll"
+          style="scrollbar-width: none"
+        >
+          @for (i of [1, 2]; track i) {
+            <div
+              class="relative bg-white border-2 border-gray-100 p-4 rounded-2xl shadow-sm flex items-center justify-center min-h-[4.5rem] gap-4"
+            >
+              <div class="flex-1 flex justify-end">
+                <div class="skeleton h-5 w-24 bg-gray-200"></div>
+              </div>
+              <div class="skeleton h-6 w-8 bg-gray-200 rounded-lg shrink-0"></div>
+              <div class="flex-1"><div class="skeleton h-5 w-24 bg-gray-200"></div></div>
+            </div>
+          }
+        </div>
+      } @else if (currentMatchDayMatches().length > 0) {
+        <div
+          class="space-y-3 max-h-[50vh] overflow-y-auto pb-4 hide-scroll"
+          style="scrollbar-width: none"
+        >
+          @for (match of currentMatchDayMatches(); track match.id) {
+            <div
+              class="relative bg-white border-2 border-bordeaux/20 p-4 rounded-2xl shadow-sm flex items-center justify-center hover:border-bordeaux hover:shadow-md hover:shadow-bordeaux/10 transition-all group min-h-[4.5rem]"
+            >
+              <div
+                class="flex-1 text-right font-black text-gray-800 text-sm md:text-base uppercase tracking-tight truncate px-3"
+              >
+                {{ match.homeTeamName }}
+              </div>
+
+              <div
+                class="px-3 py-1.5 bg-bordeaux text-white font-black text-[10px] rounded-lg shrink-0 shadow-sm shadow-bordeaux/30"
+              >
+                VS
+              </div>
+
+              <div
+                class="flex-1 text-left font-black text-gray-800 text-sm md:text-base uppercase tracking-tight truncate px-3"
+              >
+                {{ match.awayTeamName }}
+              </div>
+
+              @if (match.matchStatus === 'PRE') {
+                <button
+                  (click)="deleteMatch(match.id)"
+                  class="absolute right-2 btn btn-sm btn-circle bg-white border border-gray-200 text-red-400 hover:text-red-600 hover:bg-red-50 hover:border-red-200 md:opacity-0 md:group-hover:opacity-100 transition-all shadow-sm"
+                  title="Elimina partita"
+                >
+                  <lucide-icon name="trash" class="w-4 h-4"></lucide-icon>
+                </button>
+              }
+            </div>
+          }
+        </div>
+      } @else if (matchForm.get('matchDayId')?.value) {
+        <p
+          class="text-center text-sm font-bold uppercase tracking-widest text-gray-400 py-8 border-2 border-dashed border-gray-200 rounded-2xl"
+        >
+          Nessun match programmato
+        </p>
+      } @else {
+        <p class="text-gray-300 text-xs text-center py-3">—</p>
+      }
+    </div>
+  </section>
+</div>
+
+<app-fanta-modal
+  [isOpen]="isPlayersModalOpen()"
+  title="Seleziona Rosa"
+  (closed)="closePlayersModal()"
+  size="lg"
+>
+  <div class="-m-6">
+    <div
+      class="px-6 pb-3 pt-2 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+    >
+      <p class="text-xs text-gray-500">
+        <b class="text-bordeaux">{{ tempSelectedPlayers().length }}</b> / 4-5 giocatori scelti
+      </p>
+      <div class="relative w-full sm:w-64 shrink-0">
+        <lucide-icon
+          name="search"
+          class="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 z-10"
+        ></lucide-icon>
+        <input
+          type="text"
+          placeholder="Cerca giocatore..."
+          [value]="searchTerm()"
+          (input)="searchTerm.set($any($event.target).value)"
+          class="input-fanta w-full text-xs h-9 !pl-20 !pr-10"
+        />
+        <button
+          type="button"
+          (click)="searchTerm.set('')"
+          class="absolute right-1.5 top-1/2 -translate-y-1/2 btn btn-xs btn-circle btn-ghost text-gray-400 min-h-0 h-6 w-6 z-10"
+          [class.invisible]="!searchTerm()"
+        >
+          <lucide-icon name="x" class="w-3.5 h-3.5"></lucide-icon>
+        </button>
+      </div>
+    </div>
+    <div class="overflow-y-auto max-h-[50vh]">
+      <table class="table table-zebra w-full table-sm">
+        <thead class="bg-gray-100 sticky top-0 z-10">
+          <tr class="text-[10px] uppercase text-gray-500">
+            <th class="w-20 text-center p-1">
+              <button
+                type="button"
+                (click)="toggleSelectAll()"
+                class="btn btn-xs min-h-0 h-6 bg-white border-gray-300 text-gray-600 hover:bg-gray-200 text-[9px] w-full"
+              >
+                {{ isAllSelected() ? 'SVUOTA' : 'TUTTI' }}
+              </button>
+            </th>
+            <th>Nome</th>
+            <th>Ruolo</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of filteredModalPlayers(); track p.id) {
+            <tr
+              class="hover:bg-gray-200 cursor-pointer transition-colors"
+              (click)="togglePlayerSelection(p.id)"
+            >
+              <td class="text-center">
+                <input
+                  type="checkbox"
+                  class="checkbox checkbox-sm checkbox-primary pointer-events-none"
+                  [checked]="tempSelectedPlayers().includes(p.id)"
+                />
+              </td>
+              <td>
+                <div class="font-bold text-gray-800">{{ p.name }} {{ p.surname }}</div>
+              </td>
+              <td>
+                <span class="badge badge-sm font-bold text-[9px] bg-white shadow-sm border-none">{{
+                  p.role
+                }}</span>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="3" class="text-center py-8 text-gray-400">Nessun giocatore trovato.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="p-4 border-t bg-gray-50 flex gap-3 justify-end">
+      <button
+        type="button"
+        (click)="closePlayersModal()"
+        class="btn bg-gray-200 border-none text-gray-600 hover:bg-gray-300 rounded-xl font-bold uppercase text-[10px] tracking-widest"
+      >
+        Annulla
+      </button>
+      <button
+        type="button"
+        (click)="savePlayersSelection()"
+        class="btn bg-bordeaux text-white border-none hover:bg-bordeaux-dark rounded-xl font-bold uppercase text-[10px] tracking-widest shadow-lg shadow-bordeaux/20"
+      >
+        Salva Selezione
+      </button>
+    </div>
+  </div>
+</app-fanta-modal>
+
+<app-fanta-modal [isOpen]="isTeamDetailModalOpen()" (closed)="closeTeamDetail()" size="md">
+  @if (selectedTeamDetail(); as team) {
+    <div class="-m-6">
+      <div class="p-6 border-b flex justify-between items-center bg-gray-50 rounded-t-3xl">
+        <div>
+          <h3 class="font-black text-xl text-bordeaux tracking-tight uppercase">
+            {{ team.teamName }}
+          </h3>
+          <p class="text-xs text-gray-400 mt-0.5">
+            {{ getTeamPlayers(team.playerIds).length }} giocatori in rosa
+          </p>
+        </div>
+        <button type="button" (click)="closeTeamDetail()" class="btn btn-sm btn-circle btn-ghost">
+          ✕
+        </button>
+      </div>
+      <div class="p-4 space-y-2">
+        @for (player of getTeamPlayers(team.playerIds); track player.id) {
+          <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+            <div class="avatar">
+              <div class="w-9 h-9 rounded-full bg-gray-200 border-2 border-white shadow-sm">
+                <img
+                  [src]="
+                    player.profileImg ||
+                    'https://ui-avatars.com/api/?name=' +
+                      player.name +
+                      '+' +
+                      player.surname +
+                      '&background=f3f4f6&color=800020&bold=true'
+                  "
+                  alt="Avatar"
+                />
+              </div>
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-sm text-gray-800"
+                  >{{ player.name }} {{ player.surname }}</span
+                >
+                @if (
+                  team.idCaptain &&
+                  (team.idCaptain === player.id || team.idCaptain === player.id.toString())
+                ) {
+                  <span class="badge badge-xs bg-yellow-100 text-yellow-700 border-none font-bold"
+                    >⭐ Capitano</span
+                  >
+                }
+              </div>
+              <span
+                class="badge badge-sm font-bold text-[8px] border-none uppercase text-white mt-1"
+                [ngClass]="{
+                  'bg-yellow-500': player.role === 'PORTIERE',
+                  'bg-blue-500': player.role === 'DIFENSORE',
+                  'bg-green-600': player.role === 'CENTROCAMPISTA',
+                  'bg-red-600': player.role === 'ATTACCANTE',
+                }"
+              >
+                {{ player.role }}
+              </span>
+            </div>
+            <img
+              [src]="'https://flagcdn.com/' + player.nationality.toLowerCase() + '.svg'"
+              [alt]="player.nationality"
+              class="w-5 h-auto shadow-sm"
+            />
+          </div>
+        } @empty {
+          <p class="text-center text-gray-400 py-6 text-sm">Nessun giocatore trovato.</p>
+        }
+      </div>
+      <div class="p-4 border-t bg-gray-50 rounded-b-3xl flex justify-end">
+        <button
+          type="button"
+          (click)="closeTeamDetail()"
+          class="btn bg-gray-200 border-none text-gray-600 hover:bg-gray-300 rounded-xl font-bold uppercase text-[10px]"
+        >
+          Chiudi
+        </button>
+      </div>
+    </div>
+  }
+</app-fanta-modal>
+
+<app-fanta-modal
+  [isOpen]="isConfirmModalOpen()"
+  [title]="modalTitle()"
+  (closed)="closeModal()"
+  size="sm"
+  [disableBackdropClose]="true"
+>
+  <p class="text-gray-500 text-xs sm:text-sm leading-relaxed mb-6">{{ modalMessage() }}</p>
+  <div class="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
+    <button
+      type="button"
+      (click)="closeModal()"
+      class="btn w-full sm:flex-1 bg-gray-50 border-none text-gray-500 hover:bg-gray-100 rounded-2xl font-bold uppercase text-xs tracking-widest"
+    >
+      Annulla
+    </button>
+    <button
+      (click)="confirmAction()"
+      class="btn w-full sm:flex-1 bg-bordeaux text-white border-none hover:bg-bordeaux-dark rounded-2xl font-bold uppercase text-xs tracking-widest shadow-lg shadow-bordeaux/20"
+    >
+      Conferma
+    </button>
+  </div>
+</app-fanta-modal>

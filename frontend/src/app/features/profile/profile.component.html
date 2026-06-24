@@ -1,0 +1,592 @@
+<app-header iconName="user-round" title="Profilo" subtitle="Il tuo account"></app-header>
+
+<div class="pb-28 max-w-2xl mx-auto">
+  @if (isLoadingProfile()) {
+    <div class="px-4 pt-6 space-y-4">
+      <div class="h-24 bg-gray-100 rounded-3xl animate-pulse"></div>
+      <div class="h-48 bg-gray-100 rounded-3xl animate-pulse"></div>
+    </div>
+  } @else if (user()) {
+    <div class="mx-4 mt-6 bg-bordeaux rounded-3xl p-5 text-white shadow-lg shadow-bordeaux/20">
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
+          <span class="text-xl font-black">
+            {{ user()!.name.charAt(0).toUpperCase() }}{{ user()!.surname.charAt(0).toUpperCase() }}
+          </span>
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="font-black text-lg leading-tight truncate">
+            {{ user()!.name }} {{ user()!.surname }}
+          </p>
+          <p class="text-white/70 text-sm truncate">&#64;{{ user()!.username }}</p>
+        </div>
+      </div>
+      <div class="mt-4 pt-4 border-t border-white/20 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <lucide-icon name="shield" class="w-4 h-4 text-white/60 shrink-0"></lucide-icon>
+          <span class="text-white/80 text-sm font-semibold truncate">{{
+            user()!.fantasyTeamName
+          }}</span>
+        </div>
+        <span
+          class="text-[10px] font-black uppercase tracking-widest bg-white/20 px-2 py-1 rounded-lg"
+        >
+          {{ user()!.role }}
+        </span>
+      </div>
+    </div>
+
+    <div class="flex mx-4 mt-5 bg-gray-100 rounded-2xl p-1 gap-1">
+      <button
+        (click)="setTab('account')"
+        [ngClass]="
+          activeTab() === 'account'
+            ? 'bg-white shadow text-bordeaux font-black'
+            : 'text-gray-400 font-semibold'
+        "
+        class="flex-1 py-2.5 rounded-xl text-xs uppercase tracking-tight transition-all flex items-center justify-center gap-1.5"
+      >
+        <lucide-icon name="user" class="w-3.5 h-3.5"></lucide-icon> Account
+      </button>
+      <button
+        (click)="setTab('player')"
+        [ngClass]="
+          activeTab() === 'player'
+            ? 'bg-white shadow text-bordeaux font-black'
+            : 'text-gray-400 font-semibold'
+        "
+        class="flex-1 py-2.5 rounded-xl text-xs uppercase tracking-tight transition-all flex items-center justify-center gap-1.5"
+      >
+        <lucide-icon name="shirt" class="w-3.5 h-3.5"></lucide-icon> Alter-ego
+      </button>
+      <button
+        (click)="setTab('stats')"
+        [ngClass]="
+          activeTab() === 'stats'
+            ? 'bg-white shadow text-bordeaux font-black'
+            : 'text-gray-400 font-semibold'
+        "
+        class="flex-1 py-2.5 rounded-xl text-xs uppercase tracking-tight transition-all flex items-center justify-center gap-1.5"
+      >
+        <lucide-icon name="chart-bar" class="w-3.5 h-3.5"></lucide-icon> Statistiche
+      </button>
+    </div>
+
+    @if (activeTab() === 'account') {
+      <div class="px-4 mt-5 space-y-4">
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="p-4 bg-gray-50 border-b border-gray-100 flex items-center gap-2">
+            <lucide-icon name="id-card" class="w-4 h-4 text-bordeaux"></lucide-icon>
+            <h2 class="text-sm font-black uppercase tracking-tight text-gray-800">
+              Dati Personali
+            </h2>
+          </div>
+
+          <div class="divide-y divide-gray-100">
+            @for (
+              field of [
+                { key: 'name', label: 'Nome' },
+                { key: 'surname', label: 'Cognome' },
+                { key: 'username', label: 'Username' },
+                { key: 'fantasyTeamName', label: 'Nome Fantateam' },
+              ];
+              track field.key
+            ) {
+              <div
+                class="p-4 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
+              >
+                <div class="flex-1">
+                  <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">
+                    {{ field.label }}
+                  </p>
+
+                  @if (editingField() !== field.key) {
+                    <p class="text-sm font-black text-gray-800">{{ $any(user())![field.key] }}</p>
+                  } @else {
+                    <input
+                      [formControl]="editControl"
+                      class="w-full text-sm font-black text-gray-800 border-b-2 border-bordeaux focus:outline-none bg-transparent pb-1"
+                    />
+                  }
+                </div>
+
+                <div class="ml-4 shrink-0">
+                  @if (editingField() !== field.key) {
+                    <button
+                      (click)="startEdit($any(field.key))"
+                      class="p-2 text-gray-400 hover:text-bordeaux hover:bg-bordeaux/5 rounded-full transition-colors"
+                    >
+                      <lucide-icon name="pencil" class="w-4 h-4"></lucide-icon>
+                    </button>
+                  } @else {
+                    <div class="flex items-center gap-1">
+                      <button
+                        (click)="cancelEdit()"
+                        class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full"
+                      >
+                        <lucide-icon name="x" class="w-4 h-4"></lucide-icon>
+                      </button>
+                      <button
+                        (click)="saveField()"
+                        [disabled]="editControl.invalid || isSavingField()"
+                        class="p-2 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-full disabled:opacity-50"
+                      >
+                        <lucide-icon name="check" class="w-4 h-4"></lucide-icon>
+                      </button>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
+          <h2
+            class="text-sm font-black uppercase tracking-tight text-gray-800 mb-4 flex items-center gap-2"
+          >
+            <lucide-icon name="lock" class="w-4 h-4 text-bordeaux"></lucide-icon> Cambio password
+          </h2>
+          <form [formGroup]="passwordForm" (ngSubmit)="savePassword()" class="space-y-3">
+            <input
+              formControlName="newPassword"
+              type="password"
+              placeholder="Nuova Password"
+              class="w-full px-3 py-2.5 rounded-xl border text-sm font-semibold bg-gray-50 focus:border-bordeaux outline-none"
+            />
+            <input
+              formControlName="confirmPassword"
+              type="password"
+              placeholder="Conferma Password"
+              class="w-full px-3 py-2.5 rounded-xl border text-sm font-semibold bg-gray-50 focus:border-bordeaux outline-none"
+            />
+            <button
+              type="submit"
+              [disabled]="passwordForm.invalid || isSavingPassword()"
+              class="w-full py-3 rounded-2xl bg-gray-800 text-white font-black text-sm uppercase active:scale-95 disabled:opacity-40"
+            >
+              Aggiorna Password
+            </button>
+          </form>
+        </div>
+
+        <button
+          (click)="logout()"
+          class="w-full py-3.5 rounded-2xl border-2 border-red-200 text-red-500 font-black text-sm uppercase tracking-tight active:scale-95 flex items-center justify-center gap-2"
+        >
+          <lucide-icon name="log-out" class="w-4 h-4"></lucide-icon> Esci dall'account
+        </button>
+      </div>
+    }
+
+    @if (activeTab() === 'player') {
+      <div class="px-4 mt-5 space-y-4">
+        @if (myPlayer()) {
+          <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
+            <div class="flex items-start justify-between mb-4">
+              <h2
+                class="text-sm font-black uppercase tracking-tight text-gray-800 flex items-center gap-2"
+              >
+                <lucide-icon name="shirt" class="w-4 h-4 text-bordeaux"></lucide-icon> Il tuo
+                Alter-ego
+              </h2>
+            </div>
+
+            <div class="flex items-center gap-4 mb-5">
+              <div
+                class="w-16 h-16 rounded-2xl bg-gray-100 overflow-hidden shrink-0 flex items-center justify-center text-bordeaux font-black text-xl border border-gray-200"
+              >
+                @if (myPlayer()!.profileImg) {
+                  <img
+                    [src]="myPlayer()!.profileImg"
+                    alt="Profile"
+                    class="w-full h-full object-cover"
+                  />
+                } @else {
+                  {{ myPlayer()!.name.charAt(0) }}{{ myPlayer()!.surname.charAt(0) }}
+                }
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="font-black text-lg text-gray-900 truncate leading-tight">
+                  {{ myPlayer()!.name }} {{ myPlayer()!.surname }}
+                </p>
+                @if (myPlayer()!.nickname) {
+                  <p class="text-gray-400 text-xs font-semibold truncate">
+                    "{{ myPlayer()!.nickname }}"
+                  </p>
+                }
+                <div class="flex items-center gap-2 mt-2">
+                  <span
+                    class="text-[10px] font-black uppercase px-2 py-0.5 rounded-md"
+                    [ngClass]="roleColor(myPlayer()!.role)"
+                    >{{ roleLabel(myPlayer()!.role) }}</span
+                  >
+                  @if (myPlayer()!.nationality) {
+                    <img
+                      [src]="
+                        'https://flagcdn.com/' + myPlayer()!.nationality.toLowerCase() + '.svg'
+                      "
+                      alt="flag"
+                      class="w-5 h-auto shadow-sm rounded-sm"
+                      title="{{ myPlayer()!.nationality }}"
+                    />
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-gray-100">
+              <button
+                (click)="openEditPlayerModal()"
+                class="py-2.5 rounded-xl bg-gray-100 text-gray-700 font-black text-xs uppercase flex items-center justify-center gap-1.5 active:scale-95"
+              >
+                <lucide-icon name="pencil" class="w-3.5 h-3.5"></lucide-icon> Modifica
+              </button>
+              <button
+                (click)="openDeletePlayerModal()"
+                class="py-2.5 rounded-xl bg-red-50 text-red-600 font-black text-xs uppercase flex items-center justify-center gap-1.5 active:scale-95"
+              >
+                <lucide-icon name="trash-2" class="w-3.5 h-3.5"></lucide-icon> Elimina
+              </button>
+            </div>
+          </div>
+        } @else {
+          <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 text-center">
+            <div
+              class="w-16 h-16 rounded-3xl bg-bordeaux/10 flex items-center justify-center mx-auto mb-4"
+            >
+              <lucide-icon name="shirt" class="w-7 h-7 text-bordeaux"></lucide-icon>
+            </div>
+            <p class="font-black text-gray-800 text-base mb-1">Nessun alter-ego</p>
+            <p class="text-gray-400 text-sm mb-5 leading-relaxed">
+              Crea il tuo personaggio per scendere in campo e registrare le tue statistiche reali.
+            </p>
+            <button
+              (click)="openCreatePlayerModal()"
+              class="w-full py-3.5 rounded-2xl bg-bordeaux text-white font-black text-sm uppercase tracking-tight shadow-lg shadow-bordeaux/20 active:scale-95 flex items-center justify-center gap-2"
+            >
+              <lucide-icon name="plus" class="w-4 h-4"></lucide-icon> Crea Alter-ego
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    @if (activeTab() === 'stats') {
+      <div class="px-4 mt-5 space-y-4">
+        <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
+          <h2 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-4">Manager</h2>
+          <div
+            class="bg-amber-50 border border-amber-100 rounded-2xl p-4 flex items-center justify-between"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shrink-0"
+              >
+                <lucide-icon name="coins" class="w-5 h-5 text-white"></lucide-icon>
+              </div>
+              <div>
+                <p class="font-black text-gray-800">Punti Scommesse</p>
+                <p class="text-xs text-amber-600 font-semibold">Guadagnati tramite le Bet</p>
+              </div>
+            </div>
+            <p class="text-3xl font-black text-amber-600">{{ user()!.betPoints }}</p>
+          </div>
+        </div>
+
+        @if (myPlayer()) {
+          <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
+            <h2 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-4">
+              In Campo
+            </h2>
+
+            <div class="grid grid-cols-2 gap-3 mb-3">
+              <div class="bg-gray-50 rounded-2xl p-4 text-center border border-gray-100">
+                <p class="text-2xl font-black text-gray-800">{{ myPlayer()!.gamesPlayed }}</p>
+                <p class="text-[9px] font-bold uppercase tracking-widest text-gray-400 mt-1">
+                  Presenze
+                </p>
+              </div>
+              <div class="bg-gray-50 rounded-2xl p-4 text-center border border-gray-100">
+                <p
+                  class="text-2xl font-black"
+                  [ngClass]="
+                    myPlayer()!.averageFantaVote >= 6 ? 'text-emerald-500' : 'text-red-500'
+                  "
+                >
+                  {{
+                    myPlayer()!.averageFantaVote > 0
+                      ? (myPlayer()!.averageFantaVote | number: '1.2-2')
+                      : '–'
+                  }}
+                </p>
+                <p class="text-[9px] font-bold uppercase tracking-widest text-gray-400 mt-1">
+                  Fanta-Media
+                </p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div
+                class="bg-emerald-50 rounded-2xl p-4 flex items-center justify-between border border-emerald-100"
+              >
+                <div>
+                  <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-600">
+                    Gol
+                  </p>
+                  <div class="mt-1 text-lg">⚽</div>
+                </div>
+                <p class="text-2xl font-black text-emerald-600">{{ myPlayer()!.totalGoal }}</p>
+              </div>
+              <div
+                class="bg-blue-50 rounded-2xl p-4 flex items-center justify-between border border-blue-100"
+              >
+                <div>
+                  <p class="text-[10px] font-bold uppercase tracking-widest text-blue-600">
+                    Assist
+                  </p>
+                  <div class="mt-1 text-lg">👟</div>
+                </div>
+                <p class="text-2xl font-black text-blue-600">{{ myPlayer()!.totalAssist }}</p>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 text-center">
+            <lucide-icon name="chart-bar" class="w-8 h-8 text-gray-300 mx-auto mb-2"></lucide-icon>
+            <p class="text-xs font-black uppercase text-gray-400 tracking-widest">
+              Nessuna statistica campo
+            </p>
+            <p class="text-[10px] text-gray-400 mt-1">
+              Crea l'alter ego per sbloccare questa sezione
+            </p>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>
+
+<app-fanta-modal
+  [title]="isEditPlayerModalOpen() ? 'Modifica Alter-ego' : 'Crea Alter-ego'"
+  [isOpen]="isCreatePlayerModalOpen() || isEditPlayerModalOpen()"
+  (closed)="isEditPlayerModalOpen() ? closeEditPlayerModal() : closeCreatePlayerModal()"
+  size="xl"
+>
+  <form
+    [formGroup]="playerForm"
+    (ngSubmit)="isEditPlayerModalOpen() ? updatePlayer() : createPlayer()"
+    class="space-y-4"
+  >
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+      <div>
+        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1"
+          >Nome</label
+        >
+        <input
+          type="text"
+          formControlName="name"
+          class="w-full px-3 py-2.5 rounded-xl border text-sm font-semibold bg-gray-50 focus:outline-none focus:ring-2 focus:ring-bordeaux/30 focus:border-bordeaux transition-all"
+          placeholder="Es. Cristiano"
+        />
+      </div>
+
+      <div>
+        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1"
+          >Cognome</label
+        >
+        <input
+          type="text"
+          formControlName="surname"
+          class="w-full px-3 py-2.5 rounded-xl border text-sm font-semibold bg-gray-50 focus:outline-none focus:ring-2 focus:ring-bordeaux/30 focus:border-bordeaux transition-all"
+          placeholder="Es. Ronaldo"
+        />
+      </div>
+
+      <div>
+        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1"
+          >Soprannome (Opz.)</label
+        >
+        <input
+          type="text"
+          formControlName="nickname"
+          class="w-full px-3 py-2.5 rounded-xl border text-sm font-semibold bg-gray-50 focus:outline-none focus:ring-2 focus:ring-bordeaux/30 focus:border-bordeaux transition-all"
+          placeholder="Es. CR7"
+        />
+      </div>
+
+      <div class="flex flex-col">
+        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1"
+          >Ruolo</label
+        >
+        <div class="dropdown w-full">
+          <div
+            tabindex="0"
+            role="button"
+            class="flex justify-between items-center bg-gray-50 text-gray-800 h-[42px] border border-gray-200 rounded-xl px-3 focus:ring-bordeaux focus:border-bordeaux"
+          >
+            @if (playerForm.get('role')?.value; as selectedRole) {
+              <span class="font-bold text-sm">{{ selectedRole }}</span>
+            } @else {
+              <span class="text-gray-400 font-normal text-sm">Seleziona ruolo</span>
+            }
+            <lucide-icon name="chevron-down" class="w-4 h-4 text-gray-400"></lucide-icon>
+          </div>
+          <ul
+            tabindex="0"
+            class="dropdown-content z-[100] menu p-2 shadow-2xl bg-white rounded-xl w-full mt-2 border border-gray-100 block"
+          >
+            @for (r of ['PORTIERE', 'DIFENSORE', 'CENTROCAMPISTA', 'ATTACCANTE']; track r) {
+              <li class="mb-1">
+                <a
+                  onclick="document.activeElement.blur()"
+                  (click)="setRole(r)"
+                  class="hover:bg-bordeaux hover:text-white p-3 rounded-lg font-bold text-xs transition-colors"
+                  >{{ r }}</a
+                >
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+
+      <div class="flex flex-col">
+        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1"
+          >Nazionalità</label
+        >
+        <div class="dropdown w-full">
+          <div
+            tabindex="0"
+            role="button"
+            class="flex justify-between items-center bg-gray-50 text-gray-800 h-[42px] border border-gray-200 rounded-xl px-3 focus:ring-bordeaux focus:border-bordeaux"
+          >
+            @if (getSelectedCountry(); as selected) {
+              <div class="flex items-center gap-3">
+                <img
+                  [src]="'https://flagcdn.com/' + selected.code + '.svg'"
+                  alt="flag"
+                  class="w-5 h-auto shadow-sm"
+                />
+                <span class="font-bold text-sm">{{ selected.name }}</span>
+              </div>
+            } @else {
+              <span class="text-gray-400 font-normal text-sm">Seleziona nazione</span>
+            }
+            <lucide-icon name="chevron-down" class="w-4 h-4 text-gray-400"></lucide-icon>
+          </div>
+          <ul
+            tabindex="0"
+            class="dropdown-content z-[100] menu p-2 shadow-2xl bg-white rounded-xl w-full mt-2 border border-gray-100 max-h-60 overflow-y-auto block"
+          >
+            @for (country of countries; track country.code) {
+              <li class="mb-1">
+                <a
+                  (click)="setNationality(country.code)"
+                  onclick="document.activeElement.blur()"
+                  class="hover:bg-bordeaux hover:text-white flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer text-gray-700"
+                >
+                  <img
+                    [src]="'https://flagcdn.com/' + country.code + '.svg'"
+                    alt="flag"
+                    class="w-5 h-auto shadow-sm"
+                  />
+                  <span class="font-bold text-xs">{{ country.name }}</span>
+                </a>
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-span-full mt-2 border-t pt-4">
+      <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-2"
+        >Foto Profilo</label
+      >
+      <div
+        class="flex items-center gap-6 bg-gray-50 p-3 rounded-xl border border-dashed border-gray-300"
+      >
+        <div class="avatar placeholder">
+          <div
+            class="w-16 h-16 rounded-full border-4 border-white shadow-md bg-gray-200 flex items-center justify-center text-gray-400"
+          >
+            @if (imagePreview()) {
+              <img [src]="imagePreview()" alt="Preview" class="object-cover" />
+            } @else {
+              <lucide-icon name="user-round" class="w-8 h-8"></lucide-icon>
+            }
+          </div>
+        </div>
+        <div class="flex-1">
+          <input
+            #fileInput
+            type="file"
+            accept="image/*"
+            class="hidden"
+            (change)="onFileSelected($event)"
+          />
+          <button
+            type="button"
+            (click)="fileInput.click()"
+            [disabled]="isUploadingImage()"
+            class="px-4 py-2 text-xs font-bold uppercase tracking-widest bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 shadow-sm rounded-xl transition-all disabled:opacity-50 flex items-center gap-2"
+          >
+            @if (isUploadingImage()) {
+              <span
+                class="w-3.5 h-3.5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"
+              ></span>
+              Caricamento...
+            } @else {
+              Scegli Immagine
+            }
+          </button>
+        </div>
+        @if (imagePreview()) {
+          <button
+            type="button"
+            (click)="removeImage(); fileInput.value = ''"
+            class="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors"
+          >
+            <lucide-icon name="trash" class="w-4 h-4"></lucide-icon>
+          </button>
+        }
+      </div>
+    </div>
+
+    <button
+      type="submit"
+      [disabled]="playerForm.invalid || isSavingPlayer() || isUploadingImage()"
+      class="w-full py-3.5 mt-4 rounded-2xl bg-bordeaux text-white font-black text-sm uppercase tracking-tight shadow-lg shadow-bordeaux/20 active:scale-[0.98] transition-all disabled:opacity-50"
+    >
+      {{ isEditPlayerModalOpen() ? 'Salva Modifiche' : 'Scendi in Campo' }}
+    </button>
+  </form>
+</app-fanta-modal>
+
+<app-fanta-modal
+  title="Elimina Alter-ego"
+  [isOpen]="isDeletePlayerModalOpen()"
+  (closed)="closeDeletePlayerModal()"
+>
+  <div class="p-2 text-center">
+    <lucide-icon name="user-minus" class="w-12 h-12 text-red-500 mx-auto mb-4"></lucide-icon>
+    <h3 class="text-lg font-black text-gray-800 mb-2 leading-tight">Eliminare il tuo giocatore?</h3>
+    <p class="text-xs text-gray-500 mb-6 font-semibold">
+      Tutte le statistiche andranno perse. L'azione non è reversibile.
+    </p>
+    <div class="flex gap-3">
+      <button
+        (click)="closeDeletePlayerModal()"
+        class="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black uppercase text-[10px]"
+      >
+        Annulla
+      </button>
+      <button
+        (click)="deletePlayer()"
+        class="flex-1 py-4 bg-red-500 text-white rounded-2xl font-black uppercase text-[10px] shadow-lg shadow-red-500/20 active:scale-95"
+      >
+        Elimina Definitivamente
+      </button>
+    </div>
+  </div>
+</app-fanta-modal>

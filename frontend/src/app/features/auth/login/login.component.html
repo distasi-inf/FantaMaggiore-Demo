@@ -1,0 +1,55 @@
+<div class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+  <div class="card-fanta w-full max-w-md mx-auto">
+    
+    <h2 class="text-3xl font-black text-center mb-8 tracking-tight">
+      <span class="text-gray-800">Fanta</span><span class="text-bordeaux">Maggiore</span>
+    </h2>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4">
+      
+      <div>
+        <label class="label-fanta">Email</label>
+        <input type="email" formControlName="email" class="input-fanta" placeholder="mario@email.com">
+        
+        @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+          <p class="text-xs text-red-500 mt-1 italic">Inserisci un'email valida</p>
+        }
+      </div>
+
+      <div>
+        <label class="label-fanta">Password</label>
+        <div class="relative">
+          <input 
+            [type]="hidePassword ? 'password' : 'text'" 
+            formControlName="password" 
+            class="input-fanta pr-10" 
+            placeholder="••••••••" 
+          />
+          <button 
+            type="button" 
+            (click)="togglePassword()" 
+            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-bordeaux transition-colors"
+          >
+            <lucide-icon [name]="hidePassword ? 'eye' : 'eye-off'" class="w-4 h-4"></lucide-icon>
+          </button>
+        </div>
+        
+        @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+          <p class="text-xs text-red-500 mt-1 italic">La password deve avere almeno 6 caratteri</p>
+        }
+      </div>
+
+      <button type="submit" [disabled]="loginForm.invalid" class="btn-fanta mt-6">
+        Accedi
+      </button>
+
+      <div class="text-center mt-6">
+        <p class="text-gray-500 text-sm">
+          Non hai un account? 
+          <a routerLink="/registration" class="text-bordeaux font-bold hover:underline">Registrati ora</a>
+        </p>
+      </div>
+
+    </form>
+  </div>
+</div>

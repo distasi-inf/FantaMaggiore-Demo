@@ -1,0 +1,840 @@
+<app-header iconName="" [showAdminButton]="false">
+  <div custom-title class="flex items-center gap-1.5 -ml-2">
+    <button
+      (click)="goBack()"
+      class="p-2 rounded-xl hover:bg-gray-100 active:scale-95 transition-all text-gray-800 flex items-center justify-center"
+    >
+      <lucide-icon name="arrow-left" class="w-5 h-5"></lucide-icon>
+    </button>
+    <span class="truncate">{{ isReadOnly() ? 'Rosa Schierata' : 'Schiera Formazione' }}</span>
+  </div>
+
+  <div custom-subtitle class="ml-9">
+    @if (matchDayName()) {
+      <span class="text-[10px] font-bold text-[#800020] uppercase tracking-widest opacity-80">
+        {{ matchDayName() }}
+      </span>
+    }
+  </div>
+
+  <div extra class="flex items-center gap-2">
+    @if (showVotes()) {
+      <div
+        class="flex flex-col items-center mr-2 bg-bordeaux/5 px-3 py-1 rounded-xl border border-bordeaux/10 shadow-sm"
+      >
+        <span class="text-[8px] font-black text-bordeaux/60 uppercase tracking-widest leading-none"
+          >Punteggio</span
+        >
+        <span class="text-xl font-black text-bordeaux leading-none mt-0.5">{{
+          liveScore() | number: '1.0-1'
+        }}</span>
+      </div>
+    } @else if (timeLeft() && !isLoading() && timeLeft() !== 'Scaduto' && !isReadOnly()) {
+      <div class="hidden sm:flex flex-col items-end mr-1">
+        <span class="text-[8px] font-black text-gray-400 uppercase tracking-widest">Scade tra</span>
+        <span class="text-[10px] font-black text-gray-700">{{ timeLeft() }}</span>
+      </div>
+    }
+
+    @if (!isReadOnly()) {
+      <button
+        class="p-2 rounded-full text-red-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+        (click)="clearFormation()"
+        title="Svuota Formazione"
+      >
+        <lucide-icon name="trash-2" class="w-4 h-4"></lucide-icon>
+      </button>
+      <button
+        class="bg-bordeaux text-white hover:bg-black px-4 py-2 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-md disabled:opacity-40 disabled:bg-gray-400 transition-all active:scale-95"
+        [disabled]="!canSave()"
+        (click)="saveFormation()"
+      >
+        Salva
+      </button>
+    } @else {
+      @if (matchDayStatus() === 'LIVE') {
+        <div
+          class="flex items-center gap-1.5 bg-red-50 text-red-600 px-3 py-1.5 rounded-xl border border-red-100"
+        >
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute h-2 w-2 rounded-full bg-red-400 opacity-75"></span>
+            <span class="relative rounded-full h-2 w-2 bg-red-500"></span>
+          </span>
+          <span class="text-[10px] font-black uppercase tracking-widest">Live</span>
+        </div>
+      } @else if (matchDayStatus() === 'CALCULATED') {
+        <div
+          class="bg-gray-100 text-gray-500 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-gray-200"
+        >
+          Archiviata
+        </div>
+      } @else if (matchDayStatus() === 'OPEN' && timeLeft() === 'Scaduto') {
+        <div
+          class="bg-amber-50 text-amber-600 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-amber-100"
+        >
+          In Attesa
+        </div>
+      }
+    }
+  </div>
+</app-header>
+
+@if (isRecovered() && !isLoading()) {
+  <div class="w-full max-w-7xl mx-auto px-2 sm:px-4 mt-3">
+    <div
+      class="flex items-center gap-3 px-4 py-2.5 bg-amber-50 border border-amber-100 rounded-2xl shadow-sm animate-in fade-in slide-in-from-top-2 duration-500"
+    >
+      <div class="p-1.5 bg-amber-100/80 rounded-full shrink-0">
+        <lucide-icon name="history" class="w-4 h-4 text-amber-600"></lucide-icon>
+      </div>
+      <div class="flex flex-col">
+        <span
+          class="text-[10px] sm:text-xs font-black uppercase tracking-widest text-amber-700 leading-none"
+          >Formazione Recuperata</span
+        >
+        <span
+          class="text-[8px] sm:text-[9px] font-bold text-amber-600/80 uppercase mt-0.5 leading-none"
+          >Copiata automaticamente dal turno precedente</span
+        >
+      </div>
+    </div>
+  </div>
+}
+
+@if (isLoading()) {
+  <div
+    class="flex flex-col lg:flex-row gap-4 lg:gap-6 w-full max-w-7xl mx-auto px-2 sm:px-4 mt-2 h-[calc(100dvh-100px)] animate-pulse"
+  >
+    <div
+      class="w-full lg:w-2/3 bg-green-800/10 rounded-3xl h-[480px] lg:h-full shrink-0 border-4 border-green-800/5 relative overflow-hidden"
+    >
+      <div
+        class="absolute inset-0 border-2 border-green-800/10 m-4 rounded pointer-events-none"
+      ></div>
+      <div
+        class="absolute top-1/2 left-0 w-full border-t-2 border-green-800/10 pointer-events-none"
+      ></div>
+
+      @for (pos of fieldPositions; track pos.index) {
+        <div
+          class="absolute flex flex-col items-center justify-end h-[140px] w-[100px]"
+          [ngClass]="pos.cssClass"
+        >
+          <div class="w-16 h-16 bg-green-800/20 rounded-full mb-1"></div>
+          <div class="w-full h-5 bg-green-800/20 rounded-md"></div>
+        </div>
+      }
+    </div>
+
+    <div class="w-full lg:w-1/3 flex flex-col gap-4 h-[400px] lg:h-full shrink-0">
+      <div class="h-24 bg-gray-100 rounded-3xl flex items-center p-5 gap-4">
+        <div class="w-12 h-12 bg-gray-200 rounded-full"></div>
+        <div class="space-y-2 flex-1">
+          <div class="h-3 w-1/2 bg-gray-200 rounded-full"></div>
+          <div class="h-4 w-3/4 bg-gray-200 rounded-full"></div>
+        </div>
+      </div>
+      <div class="flex-1 bg-gray-50 border border-gray-100 rounded-3xl p-4 space-y-4">
+        <div class="h-3 w-1/3 bg-gray-200 rounded-full mb-6"></div>
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gray-200 rounded-full"></div>
+            <div class="space-y-2 flex-1">
+              <div class="h-3 w-3/4 bg-gray-200 rounded-full"></div>
+              <div class="h-2 w-1/4 bg-gray-200 rounded-full"></div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+} @else {
+  <div
+    class="flex flex-col lg:flex-row gap-4 lg:gap-6 h-[calc(100dvh-80px)] w-full max-w-7xl mx-auto px-2 sm:px-4 pb-10 mt-2 overflow-y-auto lg:overflow-hidden custom-scrollbar"
+  >
+    <div class="w-full lg:w-2/3 h-[480px] lg:h-full flex flex-col relative shrink-0">
+      <div
+        class="bg-green-700 flex-1 rounded-3xl relative overflow-hidden shadow-2xl flex flex-col justify-between border-4 border-white/5"
+      >
+        <div
+          class="absolute inset-0 border-2 border-white/10 m-4 rounded pointer-events-none"
+        ></div>
+        <div
+          class="absolute top-1/2 left-0 w-full border-t-2 border-white/10 pointer-events-none"
+        ></div>
+        <div
+          class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 border-2 border-white/10 rounded-full pointer-events-none"
+        ></div>
+
+        <div class="relative w-full h-full z-10">
+          @for (pos of fieldPositions; track pos.index) {
+            <div class="absolute" [ngClass]="pos.cssClass">
+              @let player = selectedStarters()[pos.index];
+              @let isSubbedOut = pos.index === substitutedStarterIndex();
+              @let hasNoVote = showVotes() && getVoto(player) === 'SV';
+
+              @if (player) {
+                <div
+                  class="relative flex flex-col items-center justify-end h-[140px] w-[100px] transition-all group"
+                  [ngClass]="{ 'cursor-pointer active:scale-95': !showVotes() && !isReadOnly() }"
+                  (click)="!showVotes() && !isReadOnly() ? removePlayer(pos.index, $event) : null"
+                >
+                  @if (isSubbedOut) {
+                    <div class="absolute -top-1 right-0 z-50">
+                      <span
+                        class="bg-red-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded-full shadow-lg flex items-center gap-0.5 border border-white"
+                      >
+                        <lucide-icon name="circle-arrow-down" class="w-3 h-3"></lucide-icon> OUT
+                      </span>
+                    </div>
+                  }
+
+                  @if (showVotes()) {
+                    <div
+                      class="absolute -top-1 -left-1 w-9 h-9 rounded-full flex items-center justify-center font-black text-xs z-30 shadow-2xl border-2 border-white animate-in zoom-in duration-300 transition-all"
+                      [ngClass]="getVotoColorClass(player)"
+                      [class.grayscale]="isSubbedOut || hasNoVote"
+                      [class.opacity-60]="isSubbedOut || hasNoVote"
+                    >
+                      {{ getVoto(player) || 'SV' }}
+                    </div>
+                  }
+
+                  @if (showVotes()) {
+                    @let stats = getLiveStats(player);
+                    @if (stats.goals > 0 || stats.assists > 0 || stats.ownGoals > 0) {
+                      <div class="absolute -top-1 -right-1 z-30 flex flex-col items-center gap-1.5">
+                        @if (stats.goals > 0) {
+                          <div class="flex -space-x-3">
+                            @for (g of getArray(stats.goals); track $index) {
+                              <div
+                                class="w-6 h-6 rounded-full bg-white flex items-center justify-center shadow-md border-2 border-white animate-in zoom-in duration-300 relative"
+                              >
+                                <span class="text-xs">⚽</span>
+                              </div>
+                            }
+                          </div>
+                        }
+                        @if (stats.assists > 0) {
+                          <div class="flex -space-x-3">
+                            @for (a of getArray(stats.assists); track $index) {
+                              <div
+                                class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shadow-md border-2 border-white animate-in zoom-in duration-300 relative"
+                              >
+                                <span class="text-[10px]">👟</span>
+                              </div>
+                            }
+                          </div>
+                        }
+                        @if (stats.ownGoals > 0) {
+                          <div class="flex -space-x-3">
+                            @for (ag of getArray(stats.ownGoals); track $index) {
+                              <div
+                                class="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center shadow-md border-2 border-white animate-in zoom-in duration-300 relative"
+                              >
+                                <span class="text-[10px]">💥</span>
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  }
+
+                  <img
+                    [src]="player.profileImg || '/assets/no-player.png'"
+                    class="object-contain z-10 transition-all"
+                    [ngClass]="{
+                      'h-[80px] drop-shadow-[0_12px_10px_rgba(0,0,0,0.6)]': player.profileImg,
+                      'h-[60px] opacity-70 group-hover:opacity-100': !player.profileImg,
+                      'grayscale opacity-50': isSubbedOut || hasNoVote,
+                    }"
+                  />
+
+                  <div
+                    class="relative z-20 w-full flex flex-col rounded-md shadow-lg border border-white/20 overflow-hidden mt-1.5 transition-all"
+                  >
+                    <span
+                      class="text-white text-[10px] font-black px-1 py-1.5 text-center w-full truncate uppercase tracking-wider block transition-colors"
+                      [ngClass]="isSubbedOut || hasNoVote ? 'bg-gray-500' : 'bg-[#800020]'"
+                    >
+                      {{ player.surname }}
+                    </span>
+                  </div>
+                </div>
+              } @else {
+                <div
+                  class="relative flex flex-col items-center justify-center transition-all"
+                  [ngClass]="{ 'grayscale opacity-60': showVotes() || isReadOnly() }"
+                >
+                  @if (showVotes() || isReadOnly()) {
+                    <div
+                      class="absolute -top-1 -left-1 w-7 h-7 rounded-full shadow-lg flex items-center justify-center text-[10px] font-black border-2 border-white bg-gray-700 text-white z-30"
+                    >
+                      N.C.
+                    </div>
+                  }
+
+                  <div
+                    class="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-all border-2"
+                    [ngClass]="
+                      showVotes() || isReadOnly()
+                        ? 'bg-gray-200 border-gray-400'
+                        : 'bg-black/20 border-dashed border-white/30'
+                    "
+                  >
+                    <lucide-icon
+                      name="user-x"
+                      class="w-7 h-7 sm:w-8 sm:h-8"
+                      [ngClass]="showVotes() || isReadOnly() ? 'text-gray-500' : 'text-white/30'"
+                    ></lucide-icon>
+                  </div>
+
+                  @if (!showVotes() && !isReadOnly()) {
+                    <div
+                      class="absolute inset-0 flex items-center justify-center cursor-pointer transform active:scale-95 transition-all opacity-0 hover:opacity-100 z-40"
+                      (click)="openSelection(pos.index)"
+                    >
+                      <div
+                        class="w-12 h-12 rounded-full border-2 border-dashed border-white flex items-center justify-center bg-black/40 shadow-inner backdrop-blur-sm"
+                      >
+                        <lucide-icon name="plus" class="text-white w-6 h-6"></lucide-icon>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="w-full lg:w-1/3 flex flex-col gap-4 lg:h-full shrink-0">
+      <div
+        class="bg-white px-6 py-5 rounded-3xl shadow-sm border border-gray-100"
+        [ngClass]="{ 'opacity-90': showVotes() }"
+      >
+        <div class="flex items-center justify-between">
+          <div class="flex flex-col">
+            <span class="font-black text-xs uppercase tracking-widest text-gray-400 mb-1"
+              >Panchina</span
+            >
+            <span class="text-sm font-bold text-gray-800 leading-none">Sostituto</span>
+          </div>
+
+          @if (selectedSub()) {
+            @let isSubbedIn = substitutedStarterIndex() !== -1;
+
+            <div
+              class="relative flex items-center gap-3 pr-4 pl-2 py-2 rounded-2xl shadow-sm border transition-colors"
+              [ngClass]="isSubbedIn ? 'border-green-500 bg-green-50' : 'bg-gray-50 border-gray-100'"
+              [class.cursor-pointer]="!showVotes() && !isReadOnly()"
+              [class.hover:bg-gray-100]="!showVotes() && !isReadOnly()"
+              (click)="!showVotes() && !isReadOnly() ? removePlayer('SUB', $event) : null"
+            >
+              @if (showVotes() && isSubbedIn) {
+                <div class="absolute -top-3 -right-2 z-20">
+                  <span
+                    class="bg-green-500 text-white font-black text-[10px] px-2 py-1 rounded-full shadow-lg flex items-center gap-1 border border-white rotate-12"
+                  >
+                    <lucide-icon name="circle-arrow-up" class="w-3 h-3"></lucide-icon> IN
+                  </span>
+                </div>
+              }
+
+              <div class="relative w-12 h-12 flex items-end justify-center">
+                <img
+                  [src]="selectedSub()?.profileImg || '/assets/sub-player.png'"
+                  alt="sub"
+                  class="h-12 object-contain drop-shadow-md z-10"
+                />
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-black text-[#800020] uppercase leading-none">{{
+                  selectedSub()?.surname
+                }}</span>
+                @if (showVotes()) {
+                  <div class="flex items-center gap-2 mt-0.5">
+                    <span class="text-[10px] font-bold text-gray-500">Voto:</span>
+                    <div
+                      class="w-6 h-6 rounded-full flex items-center justify-center font-black text-[10px] shadow-sm text-white"
+                      [ngClass]="getVotoColorClass(selectedSub())"
+                    >
+                      {{ getVoto(selectedSub()) }}
+                    </div>
+
+                    @let subStats = getLiveStats(selectedSub());
+                    @if (subStats.goals > 0 || subStats.assists > 0 || subStats.ownGoals > 0) {
+                      <div class="flex items-center gap-1.5 border-l border-gray-200 pl-2 ml-1">
+                        @if (subStats.goals > 0) {
+                          <div class="flex -space-x-2">
+                            @for (g of getArray(subStats.goals); track $index) {
+                              <div
+                                class="w-4 h-4 rounded-full bg-white flex items-center justify-center shadow-sm border border-gray-100 relative"
+                                [style.zIndex]="10 - $index"
+                                title="Gol"
+                              >
+                                <span class="text-[10px]">⚽</span>
+                              </div>
+                            }
+                          </div>
+                        }
+                        @if (subStats.assists > 0) {
+                          <div class="flex -space-x-2">
+                            @for (a of getArray(subStats.assists); track $index) {
+                              <div
+                                class="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center shadow-sm border border-blue-200 relative"
+                                [style.zIndex]="10 - $index"
+                                title="Assist"
+                              >
+                                <span class="text-[10px]">👟</span>
+                              </div>
+                            }
+                          </div>
+                        }
+                        @if (subStats.ownGoals > 0) {
+                          <div class="flex -space-x-2">
+                            @for (ag of getArray(subStats.ownGoals); track $index) {
+                              <div
+                                class="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center shadow-sm border border-red-200 relative"
+                                [style.zIndex]="10 - $index"
+                                title="Autogoal"
+                              >
+                                <span class="text-[10px]">💥</span>
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          } @else {
+            <div
+              class="relative flex flex-col items-center transition-all"
+              [ngClass]="{ 'opacity-80 grayscale': showVotes() || isReadOnly() }"
+            >
+              @if (showVotes() || isReadOnly()) {
+                <div
+                  class="absolute -top-1 -left-1 w-7 h-7 rounded-full shadow-lg flex items-center justify-center text-[10px] font-black border-2 border-white bg-gray-700 text-white z-30"
+                >
+                  N.C.
+                </div>
+              }
+
+              <div
+                class="w-14 h-14 rounded-full flex items-center justify-center border-2"
+                [ngClass]="
+                  showVotes() || isReadOnly()
+                    ? 'bg-gray-200 border-gray-400'
+                    : 'bg-black/20 border-dashed border-white/30'
+                "
+              >
+                <lucide-icon
+                  name="user-x"
+                  class="w-7 h-7"
+                  [ngClass]="showVotes() || isReadOnly() ? 'text-gray-500' : 'text-white/30'"
+                ></lucide-icon>
+              </div>
+
+              @if (!showVotes() && !isReadOnly()) {
+                <div
+                  class="absolute top-0 flex items-center justify-center cursor-pointer transform active:scale-95 transition-all opacity-0 hover:opacity-100 z-40 w-14 h-14"
+                  (click)="openSelection('SUB')"
+                >
+                  <div
+                    class="w-full h-full rounded-full border-2 border-dashed border-white flex items-center justify-center bg-black/40 shadow-inner backdrop-blur-sm"
+                  >
+                    <lucide-icon name="plus" class="text-white w-7 h-7"></lucide-icon>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <div
+        class="flex flex-col bg-white rounded-3xl shadow-sm border border-gray-100 flex-1 min-h-[300px] lg:min-h-0 lg:overflow-hidden"
+      >
+        <div class="p-5 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
+          <h3 class="font-black text-[10px] text-gray-400 uppercase tracking-[0.2em]">
+            Riepilogo Squadra
+          </h3>
+          @if (showVotes()) {
+            <span
+              class="text-[9px] font-bold uppercase tracking-widest transition-colors"
+              [ngClass]="
+                matchDayStatus() === 'CALCULATED' ? 'text-gray-500' : 'text-green-500 animate-pulse'
+              "
+            >
+              {{ matchDayStatus() === 'CALCULATED' ? 'Voti Definitivi' : 'Voti Live' }}
+            </span>
+          }
+        </div>
+
+        <div class="p-4 overflow-y-auto custom-scrollbar flex-1 space-y-3">
+          @for (p of selectedStarters(); track $index) {
+            @if (p) {
+              @let isSubbedOutList = $index === substitutedStarterIndex();
+              @let hasNoVoteList = showVotes() && getVoto(p) === 'SV';
+
+              <div
+                class="flex items-center gap-3 p-3 rounded-2xl border transition-all"
+                [ngClass]="
+                  isSubbedOutList
+                    ? 'bg-red-50/50 border-red-100 opacity-60'
+                    : hasNoVoteList
+                      ? 'bg-gray-100 border-gray-200 opacity-60 grayscale'
+                      : 'bg-gray-50/50 border-gray-100'
+                "
+              >
+                <div
+                  class="w-10 h-10 rounded-full bg-white shadow-sm flex items-end justify-center overflow-hidden border border-gray-100 shrink-0"
+                >
+                  <img [src]="p.profileImg || '/assets/no-player.png'" class="h-9 object-contain" />
+                </div>
+
+                <div class="flex flex-col flex-1 overflow-hidden">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-black text-gray-800 uppercase truncate">{{
+                      p.surname
+                    }}</span>
+                    @if (showVotes()) {
+                      <div
+                        class="w-6 h-6 rounded-full flex items-center justify-center font-black text-[10px] shadow-sm shrink-0 text-white"
+                        [ngClass]="getVotoColorClass(p)"
+                      >
+                        {{ getVoto(p) }}
+                      </div>
+                    }
+                  </div>
+
+                  <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+                    @if (showVotes()) {
+                      @let statsP = getLiveStats(p);
+
+                      @for (g of getArray(statsP.goals); track $index) {
+                        <div
+                          class="flex items-center bg-green-100 rounded-md px-1.5 py-0.5 border border-green-200"
+                          title="Gol"
+                        >
+                          <span class="text-[10px]">⚽</span>
+                          <span class="text-[9px] font-black text-green-700 ml-1">+3</span>
+                        </div>
+                      }
+                      @for (a of getArray(statsP.assists); track $index) {
+                        <div
+                          class="flex items-center bg-blue-100 rounded-md px-1.5 py-0.5 border border-blue-200"
+                          title="Assist"
+                        >
+                          <span class="text-[10px]">👟</span>
+                          <span class="text-[9px] font-black text-blue-700 ml-1">+1</span>
+                        </div>
+                      }
+                      @for (ag of getArray(statsP.ownGoals); track $index) {
+                        <div
+                          class="flex items-center bg-red-100 rounded-md px-1.5 py-0.5 border border-red-200"
+                          title="Autogoal"
+                        >
+                          <span class="text-[10px]">💥</span>
+                          <span class="text-[9px] font-black text-red-700 ml-1">-3</span>
+                        </div>
+                      }
+
+                      @if (statsP.goals === 0 && statsP.assists === 0 && statsP.ownGoals === 0) {
+                        <span class="text-[9px] font-bold text-gray-400 tracking-tighter">{{
+                          p.role
+                        }}</span>
+                      }
+                    } @else {
+                      <span class="text-[9px] font-bold text-gray-400 tracking-tighter">{{
+                        p.role
+                      }}</span>
+                    }
+                  </div>
+                </div>
+
+                <div class="ml-auto flex items-center gap-1.5">
+                  @if (isSubbedOutList) {
+                    <span
+                      class="badge badge-sm bg-red-600 text-[8px] text-white font-black border-none px-1.5 uppercase shadow-sm"
+                    >
+                      <lucide-icon name="circle-arrow-down" class="w-2.5 h-2.5 mr-0.5"></lucide-icon
+                      >OUT
+                    </span>
+                  }
+                  <span
+                    class="badge badge-sm bg-[#800020] text-[8px] text-white font-black border-none px-2 uppercase shadow-sm"
+                    >TIT</span
+                  >
+                </div>
+              </div>
+            }
+          }
+
+          @if (!canSave() && !showVotes() && !isReadOnly()) {
+            <div class="text-center py-10 opacity-30">
+              <lucide-icon name="users" class="w-10 h-10 mx-auto mb-2"></lucide-icon>
+              <p class="text-[10px] font-bold uppercase tracking-widest">
+                Completa campo e panchina
+              </p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<app-fanta-modal [isOpen]="isSelectionModalOpen()" (closed)="closeSelection()" size="md">
+  <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
+    <h3 class="font-black text-lg text-gray-800 tracking-tight">
+      Seleziona {{ activeSlotForSelection() === 'SUB' ? 'Panchinaro' : 'Titolare' }}
+    </h3>
+  </div>
+
+  <div class="tabs tabs-boxed bg-gray-100 justify-center w-full mb-4 p-1 rounded-2xl">
+    @for (role of ['TUTTI', 'PORTIERE', 'DIFENSORE', 'CENTROCAMPISTA', 'ATTACCANTE']; track role) {
+      <a
+        class="tab flex-1 text-[10px] font-black transition-all"
+        [class.tab-active]="activeRoleFilter() === role"
+        [class.bg-white]="activeRoleFilter() === role"
+        [class.shadow-sm]="activeRoleFilter() === role"
+        [class.text-[#800020]]="activeRoleFilter() === role"
+        (click)="setRoleFilter(role)"
+      >
+        {{ role === 'TUTTI' ? 'ALL' : (role | slice: 0 : 3) }}
+      </a>
+    }
+  </div>
+
+  <div class="max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-2 pb-4">
+    @for (player of filteredPlayers(); track player.id) {
+      <div
+        class="flex items-center justify-between border border-gray-100 p-3 rounded-2xl transition-all"
+        [ngClass]="
+          player.isAlreadySelected
+            ? 'bg-gray-50 opacity-40 grayscale cursor-not-allowed'
+            : 'bg-white shadow-sm cursor-pointer hover:border-[#800020] hover:bg-red-50/30'
+        "
+        (click)="!player.isAlreadySelected && selectPlayerForSlot(player)"
+      >
+        <div class="flex items-center gap-4">
+          <div
+            class="w-14 h-14 flex items-center justify-center bg-gray-50 rounded-2xl border border-gray-200 shrink-0 p-1.5 shadow-inner"
+          >
+            <img
+              [src]="player.profileImg || '/assets/no-player.png'"
+              alt="avatar"
+              class="w-full h-full object-contain drop-shadow-sm"
+            />
+          </div>
+          <div class="flex flex-col">
+            <span class="font-black text-sm text-gray-800 uppercase tracking-tight">{{
+              player.surname
+            }}</span>
+            <div class="flex items-center gap-2 mt-1">
+              <span
+                class="badge badge-sm font-black text-[8px] uppercase border-none text-white px-2 py-2 shadow-sm"
+                [ngClass]="{
+                  'bg-yellow-500': player.role === 'PORTIERE',
+                  'bg-blue-500': player.role === 'DIFENSORE',
+                  'bg-green-600': player.role === 'CENTROCAMPISTA',
+                  'bg-red-600': player.role === 'ATTACCANTE',
+                }"
+              >
+                {{ player.role }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 relative z-10">
+          <button
+            type="button"
+            (click)="openPlayerDetail(player, $event)"
+            class="p-2 rounded-full bg-blue-50 text-blue-500 hover:bg-blue-100 transition-colors shadow-sm"
+            title="Vedi Statistiche"
+          >
+            <lucide-icon name="chart-no-axes-column" class="w-4 h-4 sm:w-5 sm:h-5"></lucide-icon>
+          </button>
+
+          @if (player.isAlreadySelected) {
+            <span
+              class="text-[8px] font-black text-gray-400 bg-gray-200 px-3 py-1.5 rounded-lg uppercase tracking-widest"
+            >
+              {{ player.selectionStatus }}
+            </span>
+          } @else {
+            <div
+              class="p-2 rounded-full bg-gray-50 text-gray-400 group-hover:text-[#800020] transition-colors"
+            >
+              <lucide-icon name="plus" class="w-4 h-4 sm:w-5 sm:h-5"></lucide-icon>
+            </div>
+          }
+        </div>
+      </div>
+    } @empty {
+      <div class="text-center py-10 text-gray-400 text-xs font-bold uppercase tracking-widest">
+        Nessun giocatore
+      </div>
+    }
+  </div>
+</app-fanta-modal>
+
+<app-fanta-modal
+  [isOpen]="isConfirmModalOpen()"
+  (closed)="closeModal()"
+  size="sm"
+  [disableBackdropClose]="true"
+>
+  <div class="flex items-center gap-3 mb-4">
+    <div class="p-2 bg-red-50 rounded-full shrink-0">
+      <lucide-icon name="triangle-alert" class="w-6 h-6 text-[#800020]"></lucide-icon>
+    </div>
+    <h3 class="font-black text-lg text-gray-800 tracking-tight uppercase">Modifiche non salvate</h3>
+  </div>
+  <p class="text-gray-500 text-xs font-bold leading-relaxed mb-8">
+    Stai per uscire senza aver salvato la formazione attuale. Vuoi davvero abbandonare?
+  </p>
+  <div class="flex flex-col-reverse sm:flex-row gap-3">
+    <button
+      (click)="closeModal()"
+      class="btn w-full sm:flex-1 bg-gray-100 border-none text-gray-500 hover:bg-gray-200 rounded-2xl font-black uppercase text-[10px] tracking-widest"
+    >
+      Annulla
+    </button>
+    <button
+      (click)="confirmGoBack()"
+      class="btn w-full sm:flex-1 bg-[#800020] text-white border-none hover:bg-black rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-red-900/20"
+    >
+      Esci
+    </button>
+  </div>
+</app-fanta-modal>
+
+<app-fanta-modal [isOpen]="isDetailModalOpen()" (closed)="closePlayerDetail()" size="md">
+  @if (selectedPlayerDetail(); as player) {
+    <div class="-m-6">
+      <div
+        class="relative h-28 sm:h-32 flex items-center justify-center shrink-0 rounded-t-3xl"
+        [ngClass]="{
+          'bg-yellow-500': player.role === 'PORTIERE',
+          'bg-blue-500': player.role === 'DIFENSORE',
+          'bg-green-600': player.role === 'CENTROCAMPISTA',
+          'bg-red-600': player.role === 'ATTACCANTE',
+        }"
+      >
+        <button
+          type="button"
+          (click)="closePlayerDetail()"
+          class="btn btn-sm btn-circle btn-ghost absolute top-4 right-4 text-white hover:bg-black/20"
+        >
+          ✕
+        </button>
+      </div>
+      <div class="px-5 pb-8 sm:px-8 sm:pb-10 text-center -mt-14 sm:-mt-16 relative z-10">
+        <div class="avatar online">
+          <div
+            class="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 border-white bg-white shadow-xl mx-auto"
+          >
+            <img
+              [src]="
+                player.profileImg ||
+                'https://ui-avatars.com/api/?name=' +
+                  player.name +
+                  '+' +
+                  player.surname +
+                  '&background=f3f4f6&color=800020&bold=true'
+              "
+              class="object-cover"
+            />
+          </div>
+        </div>
+        <h3 class="font-black text-2xl sm:text-3xl text-gray-800 mt-4 leading-tight tracking-tight">
+          {{ player.name }} <br />{{ player.surname }}
+        </h3>
+        @if (player.nickname) {
+          <p class="text-gray-400 italic font-medium text-sm sm:text-base mt-1">
+            "{{ player.nickname }}"
+          </p>
+        }
+        <div class="flex items-center justify-center gap-3 mt-4">
+          <img
+            [src]="'https://flagcdn.com/' + player.nationality.toLowerCase() + '.svg'"
+            class="w-6 h-auto shadow-sm rounded-sm"
+          />
+          <span
+            class="badge font-black text-[10px] sm:text-xs tracking-widest border-none uppercase text-white shadow-sm px-3 py-3"
+            [ngClass]="{
+              'bg-yellow-500': player.role === 'PORTIERE',
+              'bg-blue-500': player.role === 'DIFENSORE',
+              'bg-green-600': player.role === 'CENTROCAMPISTA',
+              'bg-red-600': player.role === 'ATTACCANTE',
+            }"
+            >{{ player.role }}</span
+          >
+        </div>
+        <div class="mt-8 bg-gray-50 rounded-3xl p-4 sm:p-5 border border-gray-100">
+          <div
+            class="flex flex-col items-center justify-center py-5 bg-white rounded-2xl shadow-sm border border-gray-100 mb-3"
+          >
+            <span
+              class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1 text-center"
+              >Fanta Media Attuale</span
+            >
+            <span
+              class="text-4xl font-black"
+              [class.text-green-600]="player.averageFantaVote >= 6"
+              [class.text-red-500]="player.averageFantaVote < 6 && player.averageFantaVote > 0"
+              [class.text-gray-800]="player.averageFantaVote === 0"
+              >{{ player.averageFantaVote | number: '1.2-2' }}</span
+            >
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+            <div
+              class="flex flex-col items-center justify-center py-3 sm:py-4 bg-white rounded-2xl shadow-sm border border-gray-100"
+            >
+              <span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-1"
+                >Presenze</span
+              ><span class="text-xl sm:text-2xl font-black text-gray-800">{{
+                player.gamesPlayed
+              }}</span>
+            </div>
+            <div
+              class="flex flex-col items-center justify-center py-3 sm:py-4 bg-white rounded-2xl shadow-sm border border-gray-100"
+            >
+              <span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-1"
+                >Gol</span
+              ><span class="text-xl sm:text-2xl font-black text-gray-800">{{
+                player.totalGoal
+              }}</span>
+            </div>
+            <div
+              class="flex flex-col items-center justify-center py-3 sm:py-4 bg-white rounded-2xl shadow-sm border border-gray-100"
+            >
+              <span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-1"
+                >Assist</span
+              ><span class="text-xl sm:text-2xl font-black text-gray-800">{{
+                player.totalAssist
+              }}</span>
+            </div>
+            <div
+              class="flex flex-col items-center justify-center py-3 sm:py-4 bg-white rounded-2xl shadow-sm border border-red-50"
+            >
+              <span class="text-[9px] text-red-400 font-bold uppercase tracking-widest mb-1"
+                >Autogol</span
+              ><span class="text-xl sm:text-2xl font-black text-red-600">{{
+                player.totalOwnGoal
+              }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</app-fanta-modal>

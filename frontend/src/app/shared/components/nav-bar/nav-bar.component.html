@@ -1,0 +1,141 @@
+<nav
+  class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-[1000] pb-[env(safe-area-inset-bottom)]"
+>
+  <!-- Popup "Altro" — ancorato alla navbar, nessun overlay -->
+  @if (isMenuOpen) {
+    <div
+      class="absolute bottom-full left-0 right-0 max-w-2xl mx-auto flex justify-end px-4 pb-2 animate-in slide-in-from-bottom-2 fade-in duration-200"
+    >
+      <div
+        class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden min-w-[160px]"
+      >
+        <a
+          routerLink="/players"
+          routerLinkActive
+          #playersLink="routerLinkActive"
+          (click)="closeMenu()"
+          class="flex items-center gap-3 px-4 py-3.5 transition-colors border-b border-gray-50"
+          [ngClass]="
+            playersLink.isActive ? 'text-bordeaux bg-bordeaux/5' : 'text-gray-700 hover:bg-gray-50'
+          "
+        >
+          <lucide-icon name="users" class="w-4.5 h-4.5 shrink-0"></lucide-icon>
+          <span class="text-sm font-black uppercase tracking-tight">Listone</span>
+        </a>
+        <a
+          routerLink="/profile"
+          routerLinkActive
+          #profileMenuLink="routerLinkActive"
+          (click)="closeMenu()"
+          class="flex items-center gap-3 px-4 py-3.5 transition-colors"
+          [ngClass]="
+            profileMenuLink.isActive
+              ? 'text-bordeaux bg-bordeaux/5'
+              : 'text-gray-700 hover:bg-gray-50'
+          "
+        >
+          <lucide-icon name="user-round" class="w-4.5 h-4.5 shrink-0"></lucide-icon>
+          <span class="text-sm font-black uppercase tracking-tight">Profilo</span>
+        </a>
+      </div>
+    </div>
+  }
+
+  <div class="flex justify-around items-center h-16 w-full max-w-2xl mx-auto px-2">
+    <!-- Home -->
+    <a
+      routerLink="/home"
+      routerLinkActive="text-bordeaux"
+      [routerLinkActiveOptions]="{ exact: true }"
+      #homeLink="routerLinkActive"
+      [ngClass]="homeLink.isActive ? 'text-bordeaux' : 'text-gray-400'"
+      class="flex flex-col items-center justify-center flex-1 h-full hover:text-bordeaux transition-colors relative"
+    >
+      @if (homeLink.isActive) {
+        <div
+          class="absolute top-0 w-8 h-[3px] bg-bordeaux rounded-b-md animate-in fade-in zoom-in duration-300"
+        ></div>
+      }
+      <lucide-icon name="house" class="w-6 h-6"></lucide-icon>
+      <span class="hidden sm:block text-[10px] font-bold uppercase tracking-tighter mt-1"
+        >Home</span
+      >
+    </a>
+
+    <!-- Calendario -->
+    <a
+      routerLink="/calendar"
+      routerLinkActive="text-bordeaux"
+      #calendarLink="routerLinkActive"
+      [ngClass]="calendarLink.isActive ? 'text-bordeaux' : 'text-gray-400'"
+      class="flex flex-col items-center justify-center flex-1 h-full hover:text-bordeaux transition-colors relative"
+    >
+      @if (calendarLink.isActive) {
+        <div
+          class="absolute top-0 w-8 h-[3px] bg-bordeaux rounded-b-md animate-in fade-in zoom-in duration-300"
+        ></div>
+      }
+      <lucide-icon name="calendar-days" class="w-6 h-6"></lucide-icon>
+      <span class="hidden sm:block text-[10px] font-bold uppercase tracking-tighter mt-1"
+        >Calendario</span
+      >
+    </a>
+
+    <!-- Classifica -->
+    <a
+      routerLink="/ranking"
+      routerLinkActive="text-bordeaux"
+      #rankingLink="routerLinkActive"
+      [ngClass]="rankingLink.isActive ? 'text-bordeaux' : 'text-gray-400'"
+      class="flex flex-col items-center justify-center flex-1 h-full hover:text-bordeaux transition-colors relative"
+    >
+      @if (rankingLink.isActive) {
+        <div
+          class="absolute top-0 w-8 h-[3px] bg-bordeaux rounded-b-md animate-in fade-in zoom-in duration-300"
+        ></div>
+      }
+      <lucide-icon name="trophy" class="w-6 h-6"></lucide-icon>
+      <span class="hidden sm:block text-[10px] font-bold uppercase tracking-tighter mt-1"
+        >Lega</span
+      >
+    </a>
+
+    <!-- Bet -->
+    <a
+      routerLink="/bets"
+      routerLinkActive="text-bordeaux"
+      #betsLink="routerLinkActive"
+      [ngClass]="betsLink.isActive ? 'text-bordeaux' : 'text-gray-400'"
+      class="flex flex-col items-center justify-center flex-1 h-full hover:text-bordeaux transition-colors relative"
+    >
+      @if (betsLink.isActive) {
+        <div
+          class="absolute top-0 w-8 h-[3px] bg-bordeaux rounded-b-md animate-in fade-in zoom-in duration-300"
+        ></div>
+      }
+      <lucide-icon name="dices" class="w-6 h-6"></lucide-icon>
+      <span class="hidden sm:block text-[10px] font-bold uppercase tracking-tighter mt-1">Bet</span>
+    </a>
+
+    <!-- Altro -->
+    <button
+      (click)="toggleMenu()"
+      [ngClass]="isMenuOpen || isSecondaryActive ? 'text-bordeaux' : 'text-gray-400'"
+      class="flex flex-col items-center justify-center flex-1 h-full hover:text-bordeaux transition-colors relative"
+    >
+      @if (isMenuOpen || isSecondaryActive) {
+        <div
+          class="absolute top-0 w-8 h-[3px] bg-bordeaux rounded-b-md animate-in fade-in zoom-in duration-300"
+        ></div>
+      }
+      <lucide-icon
+        [name]="isMenuOpen ? 'x' : 'menu'"
+        class="w-6 h-6 transition-all duration-200"
+        [ngClass]="isMenuOpen ? 'rotate-90 scale-90' : ''"
+      ></lucide-icon>
+      <span class="hidden sm:block text-[10px] font-bold uppercase tracking-tighter mt-1"
+        >Altro</span
+      >
+    </button>
+  </div>
+</nav>

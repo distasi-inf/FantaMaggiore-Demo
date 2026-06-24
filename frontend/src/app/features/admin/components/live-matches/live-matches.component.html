@@ -1,0 +1,831 @@
+@if (matchDayId) {
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-1 space-y-3">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">Partite</p>
+
+        @if (allMatchesFinished() && matchDayStatus() === 'LIVE') {
+          <button
+            (click)="confirmCalculate()"
+            [disabled]="isCalculating()"
+            class="btn btn-sm bg-bordeaux text-white border-none hover:bg-red-900 shadow-md gap-1"
+          >
+            <lucide-icon name="calculator" class="w-3 h-3"></lucide-icon>
+            {{ isCalculating() ? 'Calcolo...' : 'Calcola Risultati' }}
+          </button>
+        }
+      </div>
+
+      @if (isLoadingMatches()) {
+        @for (i of [1, 2, 3]; track i) {
+          <div class="card-fanta p-4 border-2 border-transparent">
+            <div class="flex justify-between items-center mb-3">
+              <div class="skeleton h-3 w-16 bg-gray-200"></div>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+              <div class="skeleton h-4 w-full bg-gray-200 flex-1"></div>
+              <div class="skeleton h-7 w-14 rounded-lg bg-gray-200 shrink-0"></div>
+              <div class="skeleton h-4 w-full bg-gray-200 flex-1"></div>
+            </div>
+          </div>
+        }
+      } @else {
+        @for (match of matches(); track match.id) {
+          <div
+            (click)="selectMatch(match)"
+            class="card-fanta p-4 cursor-pointer border-2 transition-all"
+            [ngClass]="
+              selectedMatch()?.id === match.id
+                ? 'border-bordeaux bg-bordeaux/5 shadow-md'
+                : 'border-transparent hover:border-gray-200'
+            "
+          >
+            <div class="flex justify-between items-center mb-2">
+              <span
+                class="text-[9px] font-black uppercase tracking-widest"
+                [ngClass]="{
+                  'text-yellow-500': match.matchStatus === 'PRE',
+                  'text-red-500 animate-pulse': match.matchStatus === 'LIVE',
+                  'text-green-600': match.matchStatus === 'FINISHED',
+                }"
+              >
+                {{
+                  match.matchStatus === 'PRE'
+                    ? 'Da giocare'
+                    : match.matchStatus === 'LIVE'
+                      ? '● Live'
+                      : 'Terminata'
+                }}
+              </span>
+            </div>
+
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-xs text-gray-800 flex-1 truncate">{{
+                match.homeTeamName
+              }}</span>
+              <div
+                class="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-lg font-black text-sm text-bordeaux min-w-[52px] justify-center"
+              >
+                {{ match.matchStatus === 'PRE' ? '-' : match.homeScore }}
+                <span class="text-gray-300 font-light">:</span>
+                {{ match.matchStatus === 'PRE' ? '-' : match.awayScore }}
+              </div>
+              <span class="font-bold text-xs text-gray-800 flex-1 truncate text-right">{{
+                match.awayTeamName
+              }}</span>
+            </div>
+          </div>
+        } @empty {
+          <p class="text-center text-gray-400 text-sm py-8">Nessun match programmato.</p>
+        }
+      }
+    </div>
+
+    <div class="lg:col-span-2">
+      @if (selectedMatch(); as match) {
+        <div class="card-fanta p-6 space-y-6">
+          <div class="flex flex-col items-center gap-1 text-center">
+            <span
+              class="text-[10px] font-black uppercase tracking-widest"
+              [ngClass]="{
+                'text-yellow-500': match.matchStatus === 'PRE',
+                'text-red-500 animate-pulse': match.matchStatus === 'LIVE',
+                'text-green-600': match.matchStatus === 'FINISHED',
+              }"
+            >
+              {{
+                match.matchStatus === 'PRE'
+                  ? 'Da giocare'
+                  : match.matchStatus === 'LIVE'
+                    ? '● In Corso'
+                    : '✓ Terminata'
+              }}
+            </span>
+            <div class="flex items-center justify-center w-full gap-2 sm:gap-4 mt-1">
+              <span
+                class="text-lg sm:text-xl font-black text-gray-800 flex-1 text-right truncate"
+                >{{ match.homeTeamName }}</span
+              >
+              <div
+                class="px-3 sm:px-5 py-2 bg-gray-100 rounded-xl font-black text-xl sm:text-2xl text-bordeaux whitespace-nowrap shrink-0"
+              >
+                {{
+                  match.matchStatus === 'PRE' ? '- : -' : match.homeScore + ' : ' + match.awayScore
+                }}
+              </div>
+              <span class="text-lg sm:text-xl font-black text-gray-800 flex-1 text-left truncate">{{
+                match.awayTeamName
+              }}</span>
+            </div>
+            @if (match.matchStatus === 'LIVE' && match.expectedDuration) {
+              <p class="text-xs text-gray-400 mt-1">
+                Durata prevista: {{ match.expectedDuration }} min
+              </p>
+            }
+          </div>
+
+          <div class="divider my-0"></div>
+
+          @if (match.matchStatus === 'PRE') {
+            <div class="flex flex-col gap-4">
+              <div
+                class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100 shadow-inner"
+              >
+                <div>
+                  <label class="label-fanta text-xs">Portiere: {{ match.homeTeamName }}</label>
+
+                  @if (homeTeamPlayerCount() < 5) {
+                    <div class="dropdown w-full">
+                      <div
+                        tabindex="0"
+                        role="button"
+                        class="input-fanta flex justify-between items-center cursor-pointer bg-white"
+                      >
+                        <span
+                          class="text-xs"
+                          [ngClass]="
+                            selectedHomeGoalkeeperId() ? 'font-bold text-gray-800' : 'text-gray-400'
+                          "
+                        >
+                          {{
+                            selectedHomeGoalkeeperId()
+                              ? getPlayerName(selectedHomeGoalkeeperId())
+                              : 'Scegli portiere...'
+                          }}
+                        </span>
+                        <lucide-icon
+                          name="chevron-down"
+                          class="w-4 h-4 text-gray-400"
+                        ></lucide-icon>
+                      </div>
+                      <ul
+                        tabindex="0"
+                        class="dropdown-content z-[100] menu p-2 shadow-2xl bg-white rounded-xl w-full mt-1 max-h-48 overflow-y-auto block"
+                      >
+                        <li class="mb-0.5">
+                          <a
+                            (click)="selectedHomeGoalkeeperId.set(null)"
+                            onclick="document.activeElement.blur()"
+                            class="p-2 rounded-lg text-xs cursor-pointer text-gray-400 italic hover:bg-gray-100"
+                          >
+                            Nessuno
+                          </a>
+                        </li>
+                        @for (p of availableHomeGuestGoalkeepers(); track p.id) {
+                          <li class="mb-0.5">
+                            <a
+                              (click)="selectedHomeGoalkeeperId.set(p.id)"
+                              onclick="document.activeElement.blur()"
+                              class="p-2 rounded-lg text-xs cursor-pointer hover:bg-gray-100"
+                              [ngClass]="{
+                                'bg-bordeaux text-white hover:bg-bordeaux':
+                                  selectedHomeGoalkeeperId() === p.id,
+                              }"
+                            >
+                              <span class="font-bold">{{ p.name }} {{ p.surname }}</span>
+                            </a>
+                          </li>
+                        }
+                      </ul>
+                    </div>
+                  } @else {
+                    <div
+                      class="flex items-center justify-center gap-2 p-2.5 bg-green-50 border border-green-200 rounded-xl shadow-sm mt-1"
+                    >
+                      <lucide-icon name="circle-check" class="w-4 h-4 text-green-600"></lucide-icon>
+                      <span class="text-green-700 font-bold text-[10px] uppercase tracking-widest"
+                        >Rosa al completo (5/5)</span
+                      >
+                    </div>
+                  }
+                </div>
+
+                <div>
+                  <label class="label-fanta text-xs">Portiere: {{ match.awayTeamName }}</label>
+
+                  @if (awayTeamPlayerCount() < 5) {
+                    <div class="dropdown w-full">
+                      <div
+                        tabindex="0"
+                        role="button"
+                        class="input-fanta flex justify-between items-center cursor-pointer bg-white"
+                      >
+                        <span
+                          class="text-xs"
+                          [ngClass]="
+                            selectedAwayGoalkeeperId() ? 'font-bold text-gray-800' : 'text-gray-400'
+                          "
+                        >
+                          {{
+                            selectedAwayGoalkeeperId()
+                              ? getPlayerName(selectedAwayGoalkeeperId())
+                              : 'Scegli portiere...'
+                          }}
+                        </span>
+                        <lucide-icon
+                          name="chevron-down"
+                          class="w-4 h-4 text-gray-400"
+                        ></lucide-icon>
+                      </div>
+                      <ul
+                        tabindex="0"
+                        class="dropdown-content z-[100] menu p-2 shadow-2xl bg-white rounded-xl w-full mt-1 max-h-48 overflow-y-auto block"
+                      >
+                        <li class="mb-0.5">
+                          <a
+                            (click)="selectedAwayGoalkeeperId.set(null)"
+                            onclick="document.activeElement.blur()"
+                            class="p-2 rounded-lg text-xs cursor-pointer text-gray-400 italic hover:bg-gray-100"
+                          >
+                            Nessuno
+                          </a>
+                        </li>
+                        @for (p of availableAwayGuestGoalkeepers(); track p.id) {
+                          <li class="mb-0.5">
+                            <a
+                              (click)="selectedAwayGoalkeeperId.set(p.id)"
+                              onclick="document.activeElement.blur()"
+                              class="p-2 rounded-lg text-xs cursor-pointer hover:bg-gray-100"
+                              [ngClass]="{
+                                'bg-bordeaux text-white hover:bg-bordeaux':
+                                  selectedAwayGoalkeeperId() === p.id,
+                              }"
+                            >
+                              <span class="font-bold">{{ p.name }} {{ p.surname }}</span>
+                            </a>
+                          </li>
+                        }
+                      </ul>
+                    </div>
+                  } @else {
+                    <div
+                      class="flex items-center justify-center gap-2 p-2.5 bg-green-50 border border-green-200 rounded-xl shadow-sm mt-1"
+                    >
+                      <lucide-icon name="circle-check" class="w-4 h-4 text-green-600"></lucide-icon>
+                      <span class="text-green-700 font-bold text-[10px] uppercase tracking-widest"
+                        >Rosa al completo (5/5)</span
+                      >
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <div class="flex flex-col items-center gap-3">
+                <p class="text-xs text-gray-500 font-medium">Durata prevista (minuti)</p>
+                <div class="flex items-center gap-3">
+                  <input
+                    type="number"
+                    [(ngModel)]="duration"
+                    min="1"
+                    class="input input-bordered w-24 text-center font-bold text-bordeaux"
+                  />
+                  <button
+                    (click)="confirmStartMatch()"
+                    [disabled]="!canStartMatch()"
+                    class="btn border-none gap-2"
+                    [ngClass]="
+                      canStartMatch()
+                        ? 'bg-green-500 text-white hover:bg-green-600'
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    "
+                  >
+                    <lucide-icon name="play" class="w-4 h-4"></lucide-icon> Avvia Match
+                  </button>
+                </div>
+
+                @if (!canStartMatch()) {
+                  <p
+                    class="text-[10px] text-red-500 font-bold mt-1 bg-red-50 px-3 py-1 rounded-full border border-red-100"
+                  >
+                    ⚠️ Seleziona i portieri in prestito per le squadre da 4 prima di avviare.
+                  </p>
+                }
+              </div>
+            </div>
+          }
+
+          @if (match.matchStatus === 'LIVE') {
+            <div class="flex justify-center mt-2">
+              <button
+                (click)="confirmEndMatch()"
+                class="btn btn-outline border-gray-300 text-gray-700 hover:bg-gray-100 gap-2 shadow-sm"
+              >
+                <lucide-icon name="monitor-play" class="w-4 h-4"></lucide-icon> Termina Match
+              </button>
+            </div>
+          }
+
+          @if (match.matchStatus === 'FINISHED') {
+            <div class="text-center text-sm text-gray-400 font-medium py-2">
+              ✓ Partita conclusa — i voti sono stati aggiornati
+            </div>
+          }
+
+          @if (match.matchStatus !== 'PRE') {
+            <div class="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100 shadow-inner">
+              <p
+                class="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3 flex items-center gap-2"
+              >
+                <lucide-icon name="list-ordered" class="w-3 h-3"></lucide-icon> Eventi Partita
+              </p>
+              @if (matchEvents().length === 0) {
+                <p class="text-xs text-gray-400 italic text-center py-4">
+                  Ancora nessun evento registrato in partita.
+                </p>
+              } @else {
+                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">
+                  Cronaca Eventi
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="bg-white rounded-xl p-2 border border-gray-100 shadow-sm">
+                    <div
+                      class="text-[10px] font-bold text-gray-400 uppercase bg-gray-50 p-1.5 rounded-lg text-center border border-gray-100 mb-3"
+                    >
+                      🛡️ {{ match.homeTeamName }}
+                    </div>
+                    <div
+                      class="space-y-2 max-h-[350px] overflow-y-auto pr-1"
+                      style="scrollbar-width: thin"
+                    >
+                      @for (ev of homeMatchEvents(); track ev.id) {
+                        <div
+                          class="flex items-center justify-between p-2.5 bg-gray-50/50 border border-gray-100 rounded-xl hover:bg-white hover:shadow-sm transition-all"
+                        >
+                          <div class="flex items-center gap-2">
+                            <div
+                              class="w-7 h-7 rounded-full flex items-center justify-center text-sm shadow-inner"
+                              [ngClass]="
+                                ev.type === 'GOAL'
+                                  ? 'bg-green-100/50 text-green-700'
+                                  : ev.type === 'OWNGOAL'
+                                    ? 'bg-red-100/50 text-red-700'
+                                    : 'bg-blue-100/50 text-blue-700'
+                              "
+                            >
+                              {{ ev.type === 'GOAL' ? '⚽' : ev.type === 'OWNGOAL' ? '💥' : '👟' }}
+                            </div>
+                            <div>
+                              <p class="text-xs font-bold text-gray-800">
+                                {{ getPlayerName(ev.playerId) }}
+                                @if (ev.type === 'OWNGOAL') {
+                                  <span class="text-red-500 text-[9px] ml-1 uppercase font-black"
+                                    >(Autogol)</span
+                                  >
+                                }
+                              </p>
+                              @if (ev.assistPlayerId) {
+                                <p
+                                  class="text-[9px] text-gray-500 font-bold flex items-center gap-1 mt-0.5 uppercase tracking-wider"
+                                >
+                                  <lucide-icon
+                                    name="corner-down-right"
+                                    class="w-3 h-3 text-gray-400"
+                                  ></lucide-icon>
+                                  Assist:
+                                  <span class="text-gray-700">{{
+                                    getPlayerName(ev.assistPlayerId)
+                                  }}</span>
+                                </p>
+                              }
+                            </div>
+                          </div>
+                          @if (match.matchStatus !== 'FINISHED') {
+                            <button
+                              (click)="removeEvent(ev.id)"
+                              class="btn btn-ghost btn-xs btn-circle text-gray-400 hover:text-red-500 hover:bg-red-50"
+                              title="Rimuovi evento"
+                            >
+                              <lucide-icon name="trash-2" class="w-3.5 h-3.5"></lucide-icon>
+                            </button>
+                          }
+                        </div>
+                      }
+                      @if (homeMatchEvents().length === 0) {
+                        <p class="text-[10px] text-center text-gray-400 py-6 italic">
+                          Nessun evento
+                        </p>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="bg-white rounded-xl p-2 border border-gray-100 shadow-sm">
+                    <div
+                      class="text-[10px] font-bold text-gray-400 uppercase bg-gray-50 p-1.5 rounded-lg text-center border border-gray-100 mb-3"
+                    >
+                      🛡️ {{ match.awayTeamName }}
+                    </div>
+                    <div
+                      class="space-y-2 max-h-[350px] overflow-y-auto pr-1"
+                      style="scrollbar-width: thin"
+                    >
+                      @for (ev of awayMatchEvents(); track ev.id) {
+                        <div
+                          class="flex items-center justify-between p-2.5 bg-gray-50/50 border border-gray-100 rounded-xl hover:bg-white hover:shadow-sm transition-all"
+                        >
+                          <div class="flex items-center gap-2">
+                            <div
+                              class="w-7 h-7 rounded-full flex items-center justify-center text-sm shadow-inner"
+                              [ngClass]="
+                                ev.type === 'GOAL'
+                                  ? 'bg-green-100/50 text-green-700'
+                                  : ev.type === 'OWNGOAL'
+                                    ? 'bg-red-100/50 text-red-700'
+                                    : 'bg-blue-100/50 text-blue-700'
+                              "
+                            >
+                              {{ ev.type === 'GOAL' ? '⚽' : ev.type === 'OWNGOAL' ? '💥' : '👟' }}
+                            </div>
+                            <div>
+                              <p class="text-xs font-bold text-gray-800">
+                                {{ getPlayerName(ev.playerId) }}
+                                @if (ev.type === 'OWNGOAL') {
+                                  <span class="text-red-500 text-[9px] ml-1 uppercase font-black"
+                                    >(Autogol)</span
+                                  >
+                                }
+                              </p>
+                              @if (ev.assistPlayerId) {
+                                <p
+                                  class="text-[9px] text-gray-500 font-bold flex items-center gap-1 mt-0.5 uppercase tracking-wider"
+                                >
+                                  <lucide-icon
+                                    name="corner-down-right"
+                                    class="w-3 h-3 text-gray-400"
+                                  ></lucide-icon>
+                                  Assist:
+                                  <span class="text-gray-700">{{
+                                    getPlayerName(ev.assistPlayerId)
+                                  }}</span>
+                                </p>
+                              }
+                            </div>
+                          </div>
+                          @if (match.matchStatus !== 'FINISHED') {
+                            <button
+                              (click)="removeEvent(ev.id)"
+                              class="btn btn-ghost btn-xs btn-circle text-gray-400 hover:text-red-500 hover:bg-red-50"
+                              title="Rimuovi evento"
+                            >
+                              <lucide-icon name="trash-2" class="w-3.5 h-3.5"></lucide-icon>
+                            </button>
+                          }
+                        </div>
+                      }
+                      @if (awayMatchEvents().length === 0) {
+                        <p class="text-[10px] text-center text-gray-400 py-6 italic">
+                          Nessun evento
+                        </p>
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          @if (matchPlayers().length > 0) {
+            <div>
+              <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3 mt-4">
+                Rosa in Campo
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="bg-white border border-gray-100 p-2 rounded-xl shadow-sm">
+                  <p
+                    class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 text-center border-b border-gray-100 pb-1"
+                  >
+                    {{ match.homeTeamName }}
+                  </p>
+                  <div class="space-y-1">
+                    @for (p of matchPlayers(); track p.id) {
+                      @if (p.side === 'home') {
+                        <div
+                          class="flex flex-col sm:flex-row sm:items-center sm:justify-between py-1.5 px-2 rounded-lg bg-gray-50/50 border border-transparent hover:border-gray-200 text-xs group transition-all"
+                        >
+                          <div class="flex items-center gap-2 truncate">
+                            <span
+                              class="w-5 h-5 flex items-center justify-center rounded-md font-black text-[9px]"
+                              [ngClass]="{
+                                'bg-yellow-100 text-yellow-700': p.role === 'PORTIERE',
+                                'bg-blue-100 text-blue-700': p.role === 'DIFENSORE',
+                                'bg-green-100 text-green-700': p.role === 'CENTROCAMPISTA',
+                                'bg-red-100 text-red-700': p.role === 'ATTACCANTE',
+                              }"
+                            >
+                              {{ p.role[0] }}
+                            </span>
+                            <span class="font-bold text-gray-700 truncate"
+                              >{{ p.name }} {{ p.surname }}</span
+                            >
+                          </div>
+
+                          @if (match.matchStatus === 'LIVE') {
+                            <div
+                              class="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                            >
+                              <button
+                                (click)="quickAddEvent(p, 'GOAL')"
+                                class="btn btn-xs sm:btn-xs btn-circle w-8 h-8 sm:w-6 sm:h-6 bg-green-100 text-green-700 border-none hover:bg-green-200"
+                                title="Assegna Gol"
+                              >
+                                ⚽
+                              </button>
+                              <button
+                                (click)="quickAddEvent(p, 'OWNGOAL')"
+                                class="btn btn-xs btn-circle w-8 h-8 sm:w-6 sm:h-6 bg-red-100 text-red-700 border-none hover:bg-red-200"
+                                title="Assegna Autogol"
+                              >
+                                💥
+                              </button>
+                            </div>
+                          }
+                        </div>
+                      }
+                    }
+                  </div>
+                </div>
+                <div class="bg-white border border-gray-100 p-2 rounded-xl shadow-sm">
+                  <p
+                    class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 text-center border-b border-gray-100 pb-1"
+                  >
+                    {{ match.awayTeamName }}
+                  </p>
+                  <div class="space-y-1">
+                    @for (p of matchPlayers(); track p.id) {
+                      @if (p.side === 'away') {
+                        <div
+                          class="flex flex-col sm:flex-row sm:items-center sm:justify-between py-1.5 px-2 rounded-lg bg-gray-50/50 border border-transparent hover:border-gray-200 text-xs group transition-all"
+                        >
+                          <div class="flex items-center gap-2 truncate">
+                            <span
+                              class="w-5 h-5 flex items-center justify-center rounded-md font-black text-[9px]"
+                              [ngClass]="{
+                                'bg-yellow-100 text-yellow-700': p.role === 'PORTIERE',
+                                'bg-blue-100 text-blue-700': p.role === 'DIFENSORE',
+                                'bg-green-100 text-green-700': p.role === 'CENTROCAMPISTA',
+                                'bg-red-100 text-red-700': p.role === 'ATTACCANTE',
+                              }"
+                            >
+                              {{ p.role[0] }}
+                            </span>
+                            <span class="font-bold text-gray-700 truncate"
+                              >{{ p.name }} {{ p.surname }}</span
+                            >
+                          </div>
+
+                          @if (match.matchStatus === 'LIVE') {
+                            <div
+                              class="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                            >
+                              <button
+                                (click)="quickAddEvent(p, 'GOAL')"
+                                class="btn btn-xs sm:btn-xs btn-circle w-8 h-8 sm:w-6 sm:h-6 bg-green-100 text-green-700 border-none hover:bg-green-200"
+                                title="Assegna Gol"
+                              >
+                                ⚽
+                              </button>
+                              <button
+                                (click)="quickAddEvent(p, 'OWNGOAL')"
+                                class="btn btn-xs btn-circle w-8 h-8 sm:w-6 sm:h-6 bg-red-100 text-red-700 border-none hover:bg-red-200"
+                                title="Assegna Autogol"
+                              >
+                                💥
+                              </button>
+                            </div>
+                          }
+                        </div>
+                      }
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div
+          class="card-fanta p-10 flex flex-col items-center justify-center text-center gap-3 text-gray-400 h-full border-2 border-dashed border-gray-200"
+        >
+          <lucide-icon name="monitor-play" class="w-12 h-12 opacity-30"></lucide-icon>
+          <div>
+            <h3 class="font-bold text-gray-600">Nessun match selezionato</h3>
+            <p class="text-xs font-medium mt-1">
+              Seleziona una partita dal pannello laterale per gestirla
+            </p>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="card-fanta p-6 mt-6 overflow-hidden">
+    <h3
+      class="font-bold text-gray-700 uppercase text-xs tracking-widest flex items-center gap-2 mb-4"
+    >
+      <lucide-icon name="trophy" class="w-5 h-5 text-yellow-500"></lucide-icon>
+      Classifica Reale Torneo
+    </h3>
+
+    <div
+      class="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+    >
+      <table class="table w-full text-xs whitespace-nowrap">
+        <thead>
+          <tr class="text-gray-400 border-b border-gray-100 uppercase tracking-widest text-[9px]">
+            <th class="w-8 text-center pb-3">Pos</th>
+            <th class="pb-3 text-left">Squadra</th>
+            <th class="pb-3 text-center text-bordeaux font-black">Punti</th>
+            <th class="pb-3 text-center">DR</th>
+            <th class="pb-3 text-center">Gol Fatti</th>
+            <th class="pb-3 text-center">Gol Subiti</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (isLoadingRanking()) {
+            @for (i of [1, 2, 3, 4]; track i) {
+              <tr class="border-b border-gray-50">
+                <td class="text-center py-4">
+                  <div class="skeleton h-4 w-6 mx-auto bg-gray-200"></div>
+                </td>
+                <td class="py-4"><div class="skeleton h-4 w-32 bg-gray-200"></div></td>
+                <td class="text-center py-4">
+                  <div class="skeleton h-6 w-8 mx-auto rounded-lg bg-gray-200"></div>
+                </td>
+                <td class="text-center py-4">
+                  <div class="skeleton h-4 w-6 mx-auto bg-gray-200"></div>
+                </td>
+                <td class="text-center py-4">
+                  <div class="skeleton h-4 w-6 mx-auto bg-gray-200"></div>
+                </td>
+                <td class="text-center py-4">
+                  <div class="skeleton h-4 w-6 mx-auto bg-gray-200"></div>
+                </td>
+              </tr>
+            }
+          } @else {
+            @for (team of ranking(); track team.id; let i = $index) {
+              <tr class="hover:bg-gray-50 border-b border-gray-50 transition-colors group">
+                <td class="text-center font-bold text-gray-400 group-hover:text-gray-600">
+                  {{ i + 1 }}°
+                </td>
+                <td class="font-black text-gray-800">{{ team.teamName }}</td>
+                <td class="text-center text-sm font-black text-bordeaux bg-bordeaux/5 rounded-lg">
+                  {{ team.points }}
+                </td>
+                <td
+                  class="text-center font-bold"
+                  [ngClass]="
+                    team.goalDifference > 0
+                      ? 'text-green-600'
+                      : team.goalDifference < 0
+                        ? 'text-red-500'
+                        : 'text-gray-400'
+                  "
+                >
+                  {{ team.goalDifference > 0 ? '+' + team.goalDifference : team.goalDifference }}
+                </td>
+                <td class="text-center font-bold text-gray-600">{{ team.goalsScored }}</td>
+                <td class="text-center font-bold text-gray-600">{{ team.goalsConceded }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="text-center py-8 text-gray-400 italic">
+                  Nessuna squadra presente in classifica.
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <app-fanta-modal [isOpen]="isEventModalOpen()" (closed)="isEventModalOpen.set(false)" size="sm">
+    <h3 class="font-black text-gray-800 text-lg mb-4 flex items-center gap-2">
+      @if (eventMode() === 'GOAL') {
+        ⚽ <span class="text-green-600">Registra Gol</span>
+      } @else {
+        💥 <span class="text-red-600">Registra Autogol</span>
+      }
+    </h3>
+
+    @if (eventMode() === 'GOAL') {
+      <div
+        class="mb-4 p-3 bg-green-50 rounded-xl border border-green-100 flex items-center justify-between"
+      >
+        <span class="text-xs text-green-700 font-bold uppercase tracking-widest">Marcatore</span>
+        <span class="font-black text-gray-800 text-sm">{{
+          getPlayerName(eventForm.scorerId)
+        }}</span>
+      </div>
+      <div class="mb-6">
+        <label class="label-fanta flex items-center gap-1 text-gray-500 mb-2">
+          <lucide-icon name="users" class="w-3 h-3"></lucide-icon> Assist
+          <span class="font-normal">(Opzionale)</span>
+        </label>
+        <div class="dropdown w-full">
+          <div
+            tabindex="0"
+            role="button"
+            class="input-fanta flex justify-between items-center cursor-pointer bg-white border border-gray-200 shadow-sm"
+          >
+            <span
+              class="text-xs"
+              [ngClass]="eventForm.assistId ? 'font-bold text-gray-800' : 'text-gray-400'"
+            >
+              {{ eventForm.assistId ? getPlayerName(eventForm.assistId) : 'Nessun assist...' }}
+            </span>
+            <lucide-icon name="chevron-down" class="w-4 h-4 text-gray-400"></lucide-icon>
+          </div>
+          <ul
+            tabindex="0"
+            class="dropdown-content z-[100] menu p-2 shadow-2xl bg-white rounded-xl w-full mt-1 max-h-48 overflow-y-auto block border border-gray-100"
+          >
+            <li class="mb-1">
+              <a
+                (click)="setPlayerForRole('assist', null)"
+                onclick="document.activeElement.blur()"
+                class="text-gray-400 italic text-xs cursor-pointer hover:bg-gray-100"
+                >Rimuovi assist</a
+              >
+            </li>
+            @for (p of availableAssistPlayers(); track p.id) {
+              <li class="mb-0.5">
+                <a
+                  (click)="setPlayerForRole('assist', p.id)"
+                  onclick="document.activeElement.blur()"
+                  class="p-2 rounded-lg text-xs cursor-pointer hover:bg-gray-100"
+                  [ngClass]="
+                    eventForm.assistId === p.id ? 'bg-bordeaux text-white hover:bg-bordeaux' : ''
+                  "
+                >
+                  <span class="font-bold">{{ p.name }} {{ p.surname }}</span>
+                </a>
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+    }
+
+    @if (eventMode() === 'OWNGOAL') {
+      <div
+        class="mb-6 p-4 bg-red-50 rounded-xl border border-red-100 flex flex-col items-center justify-center gap-2 text-center"
+      >
+        <span class="text-xs text-red-500 font-bold uppercase tracking-widest">Autore Autogol</span>
+        <span class="font-black text-gray-800 text-xl">{{
+          getPlayerName(eventForm.ownGoalId)
+        }}</span>
+        <p class="text-[10px] text-gray-500 mt-2">
+          Confermi di voler assegnare l'autogol a questo giocatore?
+        </p>
+      </div>
+    }
+
+    <div class="flex gap-2 mt-4 pt-4 border-t border-gray-100">
+      <button
+        (click)="isEventModalOpen.set(false)"
+        class="btn btn-ghost text-gray-500 bg-gray-100 hover:bg-gray-200 border-none flex-1"
+      >
+        Annulla
+      </button>
+      <button
+        (click)="submitEvent()"
+        class="btn bg-bordeaux text-white border-none hover:bg-red-900 shadow-lg shadow-bordeaux/30 flex-1"
+      >
+        Conferma
+      </button>
+    </div>
+  </app-fanta-modal>
+
+  <app-fanta-modal
+    [isOpen]="isConfirmModalOpen()"
+    [title]="confirmTitle"
+    (closed)="closeConfirm()"
+    size="sm"
+    [disableBackdropClose]="true"
+  >
+    <p class="text-sm text-gray-500 mb-6">{{ confirmMessage }}</p>
+    <div class="flex gap-2">
+      <button
+        (click)="closeConfirm()"
+        class="btn btn-ghost text-gray-500 bg-gray-100 hover:bg-gray-200 border-none flex-1"
+      >
+        Annulla
+      </button>
+      <button
+        (click)="executeConfirm()"
+        class="btn bg-bordeaux text-white border-none hover:bg-red-900 flex-1"
+      >
+        Conferma
+      </button>
+    </div>
+  </app-fanta-modal>
+} @else {
+  <div
+    class="card bg-white p-12 text-center border-2 border-dashed border-gray-200 rounded-3xl mt-4"
+  >
+    <lucide-icon name="tv" class="w-16 h-16 text-gray-300 mx-auto mb-4"></lucide-icon>
+    <h3 class="text-xl font-bold text-gray-700">Nessuna giornata aperta</h3>
+    <p class="text-gray-400 mt-2">Al momento non ci sono giornate in corso da gestire nel Live.</p>
+  </div>
+}

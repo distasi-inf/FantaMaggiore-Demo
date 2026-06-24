@@ -1,0 +1,339 @@
+<section class="card-fanta mb-6 max-w-none">
+  <h3 class="font-bold text-gray-700 uppercase text-[10px] tracking-widest mb-4 border-b pb-2">
+    {{ editingMatchDayId() ? 'Modifica Giornata' : 'Crea Giornata' }}
+  </h3>
+  <form [formGroup]="matchDayForm" (ngSubmit)="onSubmit()" class="space-y-4">
+    <div>
+      <label class="label-fanta">Descrizione</label>
+      <input
+        type="text"
+        formControlName="description"
+        class="input-fanta"
+        placeholder="Es. Giornata 1"
+      />
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="label-fanta">Inizio Match</label>
+        <input
+          type="datetime-local"
+          formControlName="date"
+          [min]="getMinDateTime()"
+          class="input-fanta text-xs"
+        />
+      </div>
+      <div>
+        <label class="label-fanta">Scadenza</label>
+        <input
+          type="datetime-local"
+          formControlName="deadline"
+          [min]="getMinDateTime()"
+          class="input-fanta text-xs"
+        />
+      </div>
+    </div>
+
+    <div>
+      <label class="label-fanta">Giocatori Convocati</label>
+      <div class="flex items-center gap-4 bg-white p-3 rounded-lg border border-gray-300">
+        <div class="flex-1">
+          <span class="text-sm font-bold text-gray-700">
+            <b class="text-bordeaux">{{ matchDayForm.value.playerIds.length }}</b> /
+            {{ players().length }} selezionati
+          </span>
+        </div>
+        <button
+          type="button"
+          (click)="openPlayersModal()"
+          class="btn btn-sm bg-bordeaux text-white hover:bg-bordeaux-dark border-none shadow-sm"
+        >
+          <lucide-icon name="users" class="w-4 h-4 mr-1"></lucide-icon> Aggiungi
+        </button>
+      </div>
+    </div>
+
+    <div class="flex gap-2">
+      <button type="submit" [disabled]="matchDayForm.invalid" class="btn-fanta flex-1">
+        {{ editingMatchDayId() ? 'Aggiorna Giornata e Convocati' : 'Salva Giornata e Convocati' }}
+      </button>
+
+      @if (editingMatchDayId()) {
+        <button
+          type="button"
+          (click)="cancelEdit()"
+          class="btn flex-none bg-gray-200 border-none text-gray-600 hover:bg-gray-300 shadow-sm font-bold uppercase text-xs"
+        >
+          Annulla
+        </button>
+      }
+    </div>
+  </form>
+</section>
+
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 mt-8">
+  <h3 class="font-bold text-gray-700 uppercase text-[10px] tracking-widest w-full sm:w-auto">
+    Lista Giornate ({{ matchDays().length }})
+  </h3>
+  <div class="relative w-full sm:w-64 shrink-0">
+    <lucide-icon
+      name="search"
+      class="w-4 h-4 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2 z-10"
+    ></lucide-icon>
+    <input
+      type="text"
+      placeholder="Cerca giornata..."
+      [value]="matchDaySearchTerm()"
+      (input)="matchDaySearchTerm.set($any($event.target).value)"
+      class="input-fanta w-full text-xs h-9 !pl-9 !pr-8"
+    />
+    <button
+      type="button"
+      (click)="matchDaySearchTerm.set('')"
+      class="absolute right-1 top-1/2 -translate-y-1/2 btn btn-xs btn-circle btn-ghost text-gray-400 min-h-0 h-6 w-6 z-10"
+      [class.invisible]="!matchDaySearchTerm()"
+    >
+      <lucide-icon name="x" class="w-3.5 h-3.5"></lucide-icon>
+    </button>
+  </div>
+</div>
+
+<div class="space-y-4">
+  @if (isLoading()) {
+    @for (i of [1, 2, 3]; track i) {
+      <div
+        class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4"
+      >
+        <div class="w-full md:w-auto flex flex-col items-center md:items-start gap-2">
+          <div class="flex items-center gap-2">
+            <div class="skeleton h-5 w-24 sm:w-32 bg-gray-200"></div>
+            <div class="skeleton h-4 w-12 rounded-full bg-gray-200"></div>
+          </div>
+          <div class="skeleton h-3 w-40 sm:w-48 bg-gray-200 mt-1"></div>
+        </div>
+
+        <div class="flex gap-2 items-center justify-center w-full md:w-auto mt-2 md:mt-0">
+          <div class="skeleton w-8 h-8 rounded-full bg-gray-200 shrink-0"></div>
+          <div class="skeleton w-28 h-8 rounded-lg bg-gray-200"></div>
+          <div class="skeleton w-8 h-8 rounded-lg bg-gray-200 hidden md:block"></div>
+          <div class="skeleton w-8 h-8 rounded-lg bg-gray-200 hidden md:block"></div>
+        </div>
+      </div>
+    }
+  } @else {
+    @for (md of filteredAndSortedMatchDays(); track md.id) {
+      <div
+        class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4"
+      >
+        <div class="w-full md:w-auto text-center md:text-left">
+          <h4
+            class="font-black text-gray-800 text-lg flex items-center justify-center md:justify-start gap-2"
+          >
+            {{ md.description }}
+            <span
+              class="badge badge-sm text-[9px] font-bold tracking-widest uppercase border-none"
+              [ngClass]="{
+                'bg-yellow-100 text-yellow-700': md.status === 'OPEN',
+                'bg-red-100 text-red-600': md.status === 'LIVE',
+                'bg-green-100 text-green-700': md.status === 'CALCULATED',
+              }"
+            >
+              {{ md.status }}
+            </span>
+          </h4>
+          <p class="text-[10px] text-gray-400 font-medium">
+            Deadline: {{ md.deadline | date: 'dd/MM/yy HH:mm' }}
+          </p>
+        </div>
+
+        <div class="flex gap-2 items-center">
+          <button
+            (click)="goToLiveMatches(md.id)"
+            class="btn btn-sm btn-circle bg-gray-50 border-none text-bordeaux hover:bg-bordeaux hover:text-white"
+            title="Vai ai Match Live"
+          >
+            <lucide-icon name="tv" class="w-4 h-4"></lucide-icon>
+          </button>
+
+          @if (md.status === 'LIVE') {
+            <button
+              (click)="calculateResults(md.id)"
+              class="btn btn-sm bg-bordeaux text-white hover:bg-red-900 border-none shadow-md"
+            >
+              <lucide-icon name="calculator" class="w-3 h-3 mr-1"></lucide-icon> Calcola Risultati
+            </button>
+          }
+
+          @if (md.status === 'CALCULATED') {
+            <div class="tooltip tooltip-left" data-tip="Annulla i calcoli e riporta a LIVE">
+              <button
+                (click)="rollbackMatchDay(md.id)"
+                class="btn btn-sm btn-circle bg-red-600 text-white hover:bg-red-800 border-none shadow-lg transform transition hover:scale-110 active:scale-95"
+              >
+                <lucide-icon name="refresh-ccw" class="w-4 h-4"></lucide-icon>
+              </button>
+            </div>
+          }
+
+          @if (md.status === 'OPEN') {
+            <button
+              (click)="openMatchDay(md.id)"
+              class="btn btn-sm bg-yellow-500 text-white hover:bg-yellow-600 border-none shadow-md"
+            >
+              <lucide-icon name="play" class="w-3 h-3 mr-1"></lucide-icon> Apri Giornata
+            </button>
+
+            <button
+              (click)="editMatchDay(md)"
+              class="btn btn-sm btn-ghost text-blue-500 hover:bg-blue-50"
+              title="Modifica"
+            >
+              <lucide-icon name="pencil" class="w-4 h-4"></lucide-icon>
+            </button>
+
+            <button
+              (click)="deleteMatchDay(md.id)"
+              class="btn btn-sm btn-ghost text-red-500 hover:bg-red-50"
+              title="Elimina"
+            >
+              <lucide-icon name="trash" class="w-4 h-4"></lucide-icon>
+            </button>
+          }
+        </div>
+      </div>
+    } @empty {
+      @if (matchDaySearchTerm()) {
+        <p class="text-center text-gray-400 py-6 text-sm font-bold">
+          Nessuna giornata trovata per "{{ matchDaySearchTerm() }}".
+        </p>
+      } @else {
+        <p class="text-center text-gray-400 py-6 text-sm">Nessuna giornata creata.</p>
+      }
+    }
+  }
+</div>
+
+<app-fanta-modal
+  [isOpen]="isPlayersModalOpen()"
+  title="Seleziona Convocati"
+  (closed)="closePlayersModal()"
+  size="lg"
+>
+  <div class="-m-6">
+    <div
+      class="px-6 pb-3 pt-2 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+    >
+      <p class="text-xs text-gray-500">
+        <b class="text-bordeaux">{{ tempSelectedPlayers().length }}</b> giocatori scelti
+      </p>
+      <div class="relative w-full sm:w-64 shrink-0">
+        <lucide-icon
+          name="search"
+          class="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 z-10"
+        ></lucide-icon>
+        <input
+          type="text"
+          placeholder="Cerca giocatore..."
+          [value]="searchTerm()"
+          (input)="searchTerm.set($any($event.target).value)"
+          class="input-fanta w-full text-xs h-9 !pl-20 !pr-10"
+        />
+        <button
+          type="button"
+          (click)="searchTerm.set('')"
+          class="absolute right-1.5 top-1/2 -translate-y-1/2 btn btn-xs btn-circle btn-ghost text-gray-400 min-h-0 h-6 w-6 z-10"
+          [class.invisible]="!searchTerm()"
+        >
+          <lucide-icon name="x" class="w-3.5 h-3.5"></lucide-icon>
+        </button>
+      </div>
+    </div>
+    <div class="overflow-y-auto max-h-[50vh]">
+      <table class="table table-zebra w-full table-sm">
+        <thead class="bg-gray-100 sticky top-0 z-10">
+          <tr class="text-[10px] uppercase text-gray-500">
+            <th class="w-20 text-center p-1">
+              <button
+                type="button"
+                (click)="toggleSelectAll()"
+                class="btn btn-xs min-h-0 h-6 bg-white border-gray-300 text-gray-600 hover:bg-gray-200 text-[9px] w-full"
+              >
+                {{ isAllSelected() ? 'SVUOTA' : 'TUTTI' }}
+              </button>
+            </th>
+            <th>Nome</th>
+            <th>Ruolo</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of filteredModalPlayers(); track p.id) {
+            <tr
+              class="hover:bg-gray-200 cursor-pointer transition-colors"
+              (click)="togglePlayerSelection(p.id)"
+            >
+              <td class="text-center">
+                <input
+                  type="checkbox"
+                  class="checkbox checkbox-sm checkbox-primary pointer-events-none"
+                  [checked]="tempSelectedPlayers().includes(p.id)"
+                />
+              </td>
+              <td>
+                <div class="font-bold text-gray-800">{{ p.name }} {{ p.surname }}</div>
+              </td>
+              <td>
+                <span class="badge badge-sm font-bold text-[9px] bg-white shadow-sm border-none">{{
+                  p.role
+                }}</span>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="3" class="text-center py-8 text-gray-400">Nessun giocatore trovato.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="p-4 border-t bg-gray-50 flex gap-3 justify-end">
+      <button
+        type="button"
+        (click)="closePlayersModal()"
+        class="btn bg-gray-200 border-none text-gray-600 hover:bg-gray-300 rounded-xl font-bold uppercase text-[10px] tracking-widest"
+      >
+        Annulla
+      </button>
+      <button
+        type="button"
+        (click)="savePlayersSelection()"
+        class="btn bg-bordeaux text-white border-none hover:bg-bordeaux-dark rounded-xl font-bold uppercase text-[10px] tracking-widest shadow-lg shadow-bordeaux/20"
+      >
+        Salva Selezione
+      </button>
+    </div>
+  </div>
+</app-fanta-modal>
+
+<app-fanta-modal
+  [isOpen]="isConfirmModalOpen()"
+  [title]="modalTitle()"
+  (closed)="closeModal()"
+  size="sm"
+  [disableBackdropClose]="true"
+>
+  <p class="text-gray-500 text-xs sm:text-sm leading-relaxed mb-6">{{ modalMessage() }}</p>
+  <div class="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
+    <button
+      type="button"
+      (click)="closeModal()"
+      class="btn w-full sm:flex-1 bg-gray-50 border-none text-gray-500 hover:bg-gray-100 rounded-2xl font-bold uppercase text-xs tracking-widest"
+    >
+      Annulla
+    </button>
+    <button
+      (click)="confirmAction()"
+      class="btn w-full sm:flex-1 bg-bordeaux text-white border-none hover:bg-bordeaux-dark rounded-2xl font-bold uppercase text-xs tracking-widest shadow-lg shadow-bordeaux/20"
+    >
+      Conferma
+    </button>
+  </div>
+</app-fanta-modal>

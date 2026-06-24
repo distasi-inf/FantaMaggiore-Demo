@@ -1,0 +1,397 @@
+<div class="min-h-screen bg-[#f8f9fa] pb-24">
+  <app-header iconName="trophy">
+    <span custom-title>Classifica <span class="text-bordeaux">Globale</span></span>
+  </app-header>
+
+  <div class="p-2 sm:p-4 max-w-5xl mx-auto mt-2">
+    <div class="p-2 sm:p-4 max-w-5xl mx-auto mt-2">
+      @if (isLoading()) {
+        <div class="animate-pulse space-y-12 mt-20 sm:mt-16">
+          <div class="flex items-end justify-center gap-4 h-64">
+            <div class="w-1/3 max-w-[140px] h-48 bg-gray-200 rounded-3xl"></div>
+            <div class="w-1/3 max-w-[160px] h-60 bg-gray-300 rounded-3xl shadow-xl"></div>
+            <div class="w-1/3 max-w-[140px] h-40 bg-gray-200 rounded-3xl"></div>
+          </div>
+          <div class="space-y-3">
+            @for (i of [1, 2, 3, 4]; track i) {
+              <div class="h-20 bg-gray-200 rounded-2xl w-full"></div>
+            }
+          </div>
+        </div>
+      } @else {
+        @if (ranking().length >= 3) {
+          <div
+            class="flex items-end justify-center gap-2 sm:gap-6 mt-28 sm:mt-20 mb-12 relative px-2"
+          >
+            @let second = ranking()[1];
+            <div
+              class="w-[30%] max-w-[140px] flex flex-col items-center relative animate-in slide-in-from-bottom-8 duration-700 delay-100"
+            >
+              <div class="absolute -top-12 z-20">
+                <div
+                  class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white p-1 shadow-lg shadow-gray-400/30"
+                >
+                  <div
+                    class="w-full h-full rounded-full bg-gradient-to-br from-gray-200 to-gray-400 flex items-center justify-center border-2 border-gray-100 text-white font-black text-xl shadow-inner"
+                  >
+                    {{ second.fantasyTeamName[0] | uppercase }}
+                  </div>
+                </div>
+                <div
+                  class="absolute -bottom-2 -right-2 w-7 h-7 bg-gray-300 rounded-full border-2 border-white flex items-center justify-center font-black text-gray-700 text-xs shadow-sm"
+                >
+                  2
+                </div>
+              </div>
+
+              <div
+                class="w-full rounded-3xl pt-10 pb-4 px-2 shadow-xl border relative flex flex-col items-center text-center transition-all duration-500"
+                [ngClass]="{
+                  'bg-white border-gray-100 shadow-gray-200/50': !second.isJustUpdated,
+                  'bg-green-50/80 border-green-300 shadow-green-100':
+                    second.isJustUpdated && second.liveDirection === 'up',
+                  'bg-red-50/80 border-red-300 shadow-red-100':
+                    second.isJustUpdated && second.liveDirection === 'down',
+                }"
+              >
+                @if (second.trend !== 'stable') {
+                  <div
+                    class="absolute top-2 left-2 flex items-center justify-center bg-white/60 rounded-full px-1.5 py-0.5 border border-gray-100 shadow-sm backdrop-blur-sm"
+                  >
+                    @if (second.trend === 'up') {
+                      <lucide-icon
+                        name="chevron-up"
+                        class="w-2.5 h-2.5 text-green-500"
+                      ></lucide-icon
+                      ><span class="text-[9px] font-black text-green-500">{{
+                        second.positionsMoved
+                      }}</span>
+                    } @else {
+                      <lucide-icon
+                        name="chevron-down"
+                        class="w-2.5 h-2.5 text-red-500"
+                      ></lucide-icon
+                      ><span class="text-[9px] font-black text-red-500">{{
+                        second.positionsMoved
+                      }}</span>
+                    }
+                  </div>
+                }
+
+                <span
+                  class="text-[10px] sm:text-xs font-black text-gray-800 uppercase tracking-tight truncate w-full px-1"
+                  >{{ second.fantasyTeamName }}</span
+                >
+                <span class="text-[8px] font-medium text-gray-400 truncate w-full px-1 mt-0.5"
+                  >{{ second.userName }} {{ second.userSurname }}</span
+                >
+
+                <span
+                  class="text-xl sm:text-2xl font-black mt-1 transition-colors"
+                  [ngClass]="{
+                    'text-gray-700': !second.isJustUpdated || second.liveDirection === 'neutral',
+                    'text-green-600': second.isJustUpdated && second.liveDirection === 'up',
+                    'text-red-500': second.isJustUpdated && second.liveDirection === 'down',
+                  }"
+                  >{{ second.totalPoints | number: '1.0-1' }}</span
+                >
+
+                <div
+                  class="flex items-center gap-2 mt-2 bg-gray-50 px-2 py-1 rounded-lg border border-gray-100"
+                >
+                  <span class="text-[8px] font-bold text-gray-500 flex items-center gap-0.5"
+                    ><lucide-icon name="swords" class="w-3 h-3 text-bordeaux/60"></lucide-icon
+                    >{{ second.totalPoints - (second.betPoints || 0) | number: '1.0-1' }}</span
+                  >
+                  <span class="text-[8px] font-bold text-gray-500 flex items-center gap-0.5"
+                    ><lucide-icon name="coins" class="w-3 h-3 text-amber-500"></lucide-icon
+                    >{{ second.betPoints || 0 }}</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            @let first = ranking()[0];
+            <div
+              class="w-[36%] max-w-[170px] flex flex-col items-center relative z-10 animate-in slide-in-from-bottom-12 duration-700 -mt-8"
+            >
+              <lucide-icon
+                name="crown"
+                class="absolute -top-20 z-30 w-8 h-8 text-yellow-500 drop-shadow-md animate-bounce"
+              ></lucide-icon>
+
+              <div class="absolute -top-14 z-20">
+                <div
+                  class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white p-1 shadow-2xl shadow-yellow-500/40"
+                >
+                  <div
+                    class="w-full h-full rounded-full bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600 flex items-center justify-center border-2 border-yellow-100 text-white font-black text-3xl shadow-inner"
+                  >
+                    {{ first.fantasyTeamName[0] | uppercase }}
+                  </div>
+                </div>
+                <div
+                  class="absolute -bottom-2 -right-2 w-8 h-8 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center font-black text-yellow-900 text-sm shadow-md"
+                >
+                  1
+                </div>
+              </div>
+
+              <div
+                class="w-full rounded-[2rem] pt-14 pb-5 px-2 shadow-2xl border-2 relative flex flex-col items-center text-center transition-all duration-500"
+                [ngClass]="{
+                  'bg-gradient-to-b from-yellow-50 to-white border-yellow-200/50 shadow-yellow-500/20':
+                    !first.isJustUpdated,
+                  'bg-gradient-to-b from-green-100 to-green-50 border-green-400 shadow-green-500/20':
+                    first.isJustUpdated && first.liveDirection === 'up',
+                  'bg-gradient-to-b from-red-100 to-red-50 border-red-400 shadow-red-500/20':
+                    first.isJustUpdated && first.liveDirection === 'down',
+                }"
+              >
+                @if (first.trend !== 'stable') {
+                  <div
+                    class="absolute top-3 right-3 flex items-center justify-center bg-white/60 rounded-full px-2 py-0.5 border border-yellow-100 shadow-sm backdrop-blur-sm"
+                  >
+                    @if (first.trend === 'up') {
+                      <lucide-icon name="chevron-up" class="w-3 h-3 text-green-600"></lucide-icon
+                      ><span class="text-[10px] font-black text-green-600">{{
+                        first.positionsMoved
+                      }}</span>
+                    } @else {
+                      <lucide-icon name="chevron-down" class="w-3 h-3 text-red-600"></lucide-icon
+                      ><span class="text-[10px] font-black text-red-600">{{
+                        first.positionsMoved
+                      }}</span>
+                    }
+                  </div>
+                }
+
+                <span
+                  class="text-xs sm:text-sm font-black text-yellow-700 uppercase tracking-tight truncate w-full px-1"
+                  >{{ first.fantasyTeamName }}</span
+                >
+                <span class="text-[9px] font-medium text-yellow-600/70 truncate w-full px-1 mt-0.5"
+                  >{{ first.userName }} {{ first.userSurname }}</span
+                >
+
+                <span
+                  class="text-3xl sm:text-4xl font-black mt-1 drop-shadow-sm transition-colors"
+                  [ngClass]="{
+                    'text-bordeaux': !first.isJustUpdated || first.liveDirection === 'neutral',
+                    'text-green-600': first.isJustUpdated && first.liveDirection === 'up',
+                    'text-red-600': first.isJustUpdated && first.liveDirection === 'down',
+                  }"
+                  >{{ first.totalPoints | number: '1.0-1' }}</span
+                >
+
+                <div
+                  class="flex items-center gap-2 mt-3 bg-white/80 px-3 py-1.5 rounded-xl shadow-sm border border-yellow-100"
+                >
+                  <span class="text-[9px] font-black text-gray-600 flex items-center gap-1"
+                    ><lucide-icon name="swords" class="w-3.5 h-3.5 text-bordeaux"></lucide-icon
+                    >{{ first.totalPoints - (first.betPoints || 0) | number: '1.0-1' }}</span
+                  >
+                  <span class="text-[9px] font-black text-gray-600 flex items-center gap-1"
+                    ><lucide-icon name="coins" class="w-3.5 h-3.5 text-amber-500"></lucide-icon
+                    >{{ first.betPoints || 0 }}</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            @let third = ranking()[2];
+            <div
+              class="w-[30%] max-w-[140px] flex flex-col items-center relative animate-in slide-in-from-bottom-4 duration-700 delay-200"
+            >
+              <div class="absolute -top-10 z-20">
+                <div
+                  class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white p-1 shadow-lg shadow-amber-700/20"
+                >
+                  <div
+                    class="w-full h-full rounded-full bg-gradient-to-br from-orange-300 to-orange-600 flex items-center justify-center border-2 border-orange-100 text-white font-black text-lg shadow-inner"
+                  >
+                    {{ third.fantasyTeamName[0] | uppercase }}
+                  </div>
+                </div>
+                <div
+                  class="absolute -bottom-1 -right-1 w-6 h-6 bg-orange-400 rounded-full border-2 border-white flex items-center justify-center font-black text-orange-900 text-[10px] shadow-sm"
+                >
+                  3
+                </div>
+              </div>
+
+              <div
+                class="w-full rounded-3xl pt-8 pb-3 px-2 shadow-xl border relative flex flex-col items-center text-center transition-all duration-500"
+                [ngClass]="{
+                  'bg-white border-gray-100 shadow-gray-200/50': !third.isJustUpdated,
+                  'bg-green-50/80 border-green-300 shadow-green-100':
+                    third.isJustUpdated && third.liveDirection === 'up',
+                  'bg-red-50/80 border-red-300 shadow-red-100':
+                    third.isJustUpdated && third.liveDirection === 'down',
+                }"
+              >
+                @if (third.trend !== 'stable') {
+                  <div
+                    class="absolute top-2 right-2 flex items-center justify-center bg-white/60 rounded-full px-1.5 py-0.5 border border-gray-100 shadow-sm backdrop-blur-sm"
+                  >
+                    @if (third.trend === 'up') {
+                      <lucide-icon
+                        name="chevron-up"
+                        class="w-2.5 h-2.5 text-green-500"
+                      ></lucide-icon
+                      ><span class="text-[9px] font-black text-green-500">{{
+                        third.positionsMoved
+                      }}</span>
+                    } @else {
+                      <lucide-icon
+                        name="chevron-down"
+                        class="w-2.5 h-2.5 text-red-500"
+                      ></lucide-icon
+                      ><span class="text-[9px] font-black text-red-500">{{
+                        third.positionsMoved
+                      }}</span>
+                    }
+                  </div>
+                }
+
+                <span
+                  class="text-[9px] sm:text-[10px] font-black text-gray-800 uppercase tracking-tight truncate w-full px-1"
+                  >{{ third.fantasyTeamName }}</span
+                >
+                <span class="text-[8px] font-medium text-gray-400 truncate w-full px-1 mt-0.5"
+                  >{{ third.userName }} {{ third.userSurname }}</span
+                >
+
+                <span
+                  class="text-lg sm:text-xl font-black mt-1 transition-colors"
+                  [ngClass]="{
+                    'text-gray-700': !third.isJustUpdated || third.liveDirection === 'neutral',
+                    'text-green-600': third.isJustUpdated && third.liveDirection === 'up',
+                    'text-red-500': third.isJustUpdated && third.liveDirection === 'down',
+                  }"
+                  >{{ third.totalPoints | number: '1.0-1' }}</span
+                >
+
+                <div
+                  class="flex items-center gap-2 mt-2 bg-gray-50 px-2 py-1 rounded-lg border border-gray-100"
+                >
+                  <span class="text-[8px] font-bold text-gray-500 flex items-center gap-0.5"
+                    ><lucide-icon name="swords" class="w-3 h-3 text-bordeaux/60"></lucide-icon
+                    >{{ third.totalPoints - (third.betPoints || 0) | number: '1.0-1' }}</span
+                  >
+                  <span class="text-[8px] font-bold text-gray-500 flex items-center gap-0.5"
+                    ><lucide-icon name="coins" class="w-3 h-3 text-amber-500"></lucide-icon
+                    >{{ third.betPoints || 0 }}</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+        <div id="ranking-list-container" class="space-y-3 mt-8">
+          @for (user of ranking(); track user.userId; let i = $index) {
+            @if (i >= 3 || ranking().length < 3) {
+              <div
+                class="rounded-2xl p-4 shadow-sm border flex items-center gap-4 transition-colors duration-700 group relative overflow-hidden"
+                [ngClass]="{
+                  'bg-white border-gray-100': !user.isJustUpdated && !isCurrentUser(user.userId),
+                  'bg-bordeaux/5 border-bordeaux/30':
+                    !user.isJustUpdated && isCurrentUser(user.userId),
+                  'bg-green-50/80 border-green-300 shadow-green-100':
+                    user.isJustUpdated && user.liveDirection !== 'down',
+                  'bg-red-50/80 border-red-300 shadow-red-100':
+                    user.isJustUpdated && user.liveDirection === 'down',
+                }"
+              >
+                <div
+                  class="absolute left-0 top-0 bottom-0 w-1 transition-opacity"
+                  [ngClass]="{
+                    'bg-bordeaux opacity-100': isCurrentUser(user.userId),
+                    'bg-bordeaux opacity-0 group-hover:opacity-100': !isCurrentUser(user.userId),
+                  }"
+                ></div>
+
+                <div class="flex flex-col items-center justify-center shrink-0 w-8">
+                  <div
+                    class="w-8 h-8 rounded-full bg-gray-50 text-gray-400 font-black flex items-center justify-center text-xs border border-gray-100"
+                  >
+                    {{ i + 1 }}
+                  </div>
+                  <div class="mt-1 flex items-center justify-center text-[10px] font-black h-4">
+                    @if (user.trend === 'up') {
+                      <lucide-icon name="chevron-up" class="w-3 h-3 text-green-500"></lucide-icon>
+                      <span class="text-green-500">{{ user.positionsMoved }}</span>
+                    } @else if (user.trend === 'down') {
+                      <lucide-icon name="chevron-down" class="w-3 h-3 text-red-500"></lucide-icon>
+                      <span class="text-red-500">{{ user.positionsMoved }}</span>
+                    } @else {
+                      <lucide-icon name="minus" class="w-3 h-3 text-gray-300"></lucide-icon>
+                    }
+                  </div>
+                </div>
+
+                <div class="flex flex-col flex-1 min-w-0">
+                  <div class="flex items-center gap-1.5">
+                    <span
+                      class="font-black text-gray-800 uppercase tracking-tight text-sm truncate"
+                    >
+                      {{ user.fantasyTeamName }}
+                    </span>
+                    @if (isCurrentUser(user.userId)) {
+                      <span
+                        class="shrink-0 text-[9px] font-black bg-bordeaux text-white px-1.5 py-0.5 rounded-full uppercase tracking-wide"
+                      >
+                        Tu
+                      </span>
+                    }
+                  </div>
+                  <span class="text-[10px] font-medium text-gray-400 truncate mt-0.5">
+                    {{ user.userName }} {{ user.userSurname }}
+                  </span>
+                  <div class="flex items-center gap-3 mt-1">
+                    <div class="flex items-center gap-1.5 text-[10px] font-bold text-gray-500">
+                      <lucide-icon name="swords" class="w-3 h-3 text-gray-400"></lucide-icon>
+                      Campo: {{ user.totalPoints - (user.betPoints || 0) | number: '1.0-1' }}
+                    </div>
+                    <div class="flex items-center gap-1.5 text-[10px] font-bold text-gray-500">
+                      <lucide-icon name="coins" class="w-3 h-3 text-amber-500/70"></lucide-icon>
+                      Bet: {{ user.betPoints || 0 }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex flex-col items-end justify-center shrink-0">
+                  <span
+                    class="text-xl font-black transition-colors duration-500"
+                    [ngClass]="{
+                      'text-bordeaux': !user.isJustUpdated,
+                      'text-green-600': user.isJustUpdated && user.liveDirection !== 'down',
+                      'text-red-500': user.isJustUpdated && user.liveDirection === 'down',
+                    }"
+                  >
+                    {{ user.totalPoints | number: '1.0-1' }}
+                  </span>
+                  <span class="text-[8px] font-black uppercase text-gray-400 tracking-widest"
+                    >Totali</span
+                  >
+                </div>
+              </div>
+            }
+          }
+
+          @if (ranking().length === 0) {
+            <div
+              class="bg-white rounded-3xl p-10 text-center flex flex-col items-center justify-center border border-dashed border-gray-200"
+            >
+              <lucide-icon name="trophy" class="w-12 h-12 text-gray-200 mb-3"></lucide-icon>
+              <p class="text-gray-400 font-bold uppercase tracking-widest text-xs">
+                Nessun utente in classifica
+              </p>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</div>

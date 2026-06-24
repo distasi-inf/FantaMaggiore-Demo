@@ -1,0 +1,905 @@
+<section class="card-fanta mb-6 max-w-none">
+  <h3 class="font-bold text-gray-700 uppercase text-[10px] tracking-widest mb-4 border-b pb-2">
+    Nuovo Calciatore
+  </h3>
+
+  <form [formGroup]="playerForm" (ngSubmit)="onSubmitPlayer()" class="space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 items-end">
+      <div>
+        <label class="label-fanta">Nome</label>
+        <input type="text" formControlName="name" class="input-fanta" placeholder="Es. Cristiano" />
+      </div>
+
+      <div>
+        <label class="label-fanta">Cognome</label>
+        <input
+          type="text"
+          formControlName="surname"
+          class="input-fanta"
+          placeholder="Es. Ronaldo"
+        />
+      </div>
+
+      <div>
+        <label class="label-fanta">Soprannome (Opz.)</label>
+        <input type="text" formControlName="nickname" class="input-fanta" placeholder="Es. CR7" />
+      </div>
+
+      <div class="flex flex-col">
+        <label class="label-fanta">Ruolo</label>
+        <div class="dropdown w-full">
+          <div
+            tabindex="0"
+            role="button"
+            class="input-fanta flex justify-between items-center bg-white text-gray-800 h-[50px] border border-gray-300 rounded-lg px-3 focus:ring-bordeaux focus:border-bordeaux"
+          >
+            @if (playerForm.get('role')?.value; as selectedRole) {
+              <span class="font-bold text-xs">{{ selectedRole }}</span>
+            } @else {
+              <span class="text-gray-400 font-normal text-xs">Seleziona ruolo</span>
+            }
+            <lucide-icon name="chevron-down" class="w-4 h-4 text-gray-400"></lucide-icon>
+          </div>
+          <ul
+            tabindex="0"
+            class="dropdown-content z-[100] menu p-2 shadow-2xl bg-white rounded-xl w-full mt-2 border border-gray-100 block"
+          >
+            <li class="mb-1">
+              <a
+                onclick="document.activeElement.blur()"
+                (click)="setRole('PORTIERE')"
+                class="hover:bg-bordeaux hover:text-white p-3 rounded-lg font-bold text-xs transition-colors"
+                >PORTIERE</a
+              >
+            </li>
+            <li class="mb-1">
+              <a
+                onclick="document.activeElement.blur()"
+                (click)="setRole('DIFENSORE')"
+                class="hover:bg-bordeaux hover:text-white p-3 rounded-lg font-bold text-xs transition-colors"
+                >DIFENSORE</a
+              >
+            </li>
+            <li class="mb-1">
+              <a
+                onclick="document.activeElement.blur()"
+                (click)="setRole('CENTROCAMPISTA')"
+                class="hover:bg-bordeaux hover:text-white p-3 rounded-lg font-bold text-xs transition-colors"
+                >CENTROCAMPISTA</a
+              >
+            </li>
+            <li class="mb-1">
+              <a
+                onclick="document.activeElement.blur()"
+                (click)="setRole('ATTACCANTE')"
+                class="hover:bg-bordeaux hover:text-white p-3 rounded-lg font-bold text-xs transition-colors"
+                >ATTACCANTE</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="flex flex-col">
+        <label class="label-fanta">Nazionalità</label>
+        <div class="dropdown w-full">
+          <div
+            tabindex="0"
+            role="button"
+            class="input-fanta flex justify-between items-center bg-white text-gray-800 h-[50px] border border-gray-300 rounded-lg px-3 focus:ring-bordeaux focus:border-bordeaux"
+          >
+            @if (getSelectedCountry(); as selected) {
+              <div class="flex items-center gap-3">
+                <img
+                  [src]="'https://flagcdn.com/' + selected.code + '.svg'"
+                  alt="flag"
+                  class="w-5 h-auto shadow-sm"
+                />
+                <span class="font-bold text-xs">{{ selected.name }}</span>
+              </div>
+            } @else {
+              <span class="text-gray-400 font-normal text-xs">Seleziona nazione</span>
+            }
+            <lucide-icon name="chevron-down" class="w-4 h-4 text-gray-400"></lucide-icon>
+          </div>
+          <ul
+            tabindex="0"
+            class="dropdown-content z-[100] menu p-2 shadow-2xl bg-white rounded-xl w-full mt-2 border border-gray-100 max-h-60 overflow-y-auto block"
+          >
+            @for (country of countries; track country.code) {
+              <li class="mb-1">
+                <a
+                  (click)="setNationality(country.code)"
+                  onclick="document.activeElement.blur()"
+                  class="hover:bg-bordeaux hover:text-white flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer text-gray-700"
+                >
+                  <img
+                    [src]="'https://flagcdn.com/' + country.code + '.svg'"
+                    alt="flag"
+                    class="w-5 h-auto shadow-sm"
+                  />
+                  <span class="font-bold text-xs">{{ country.name }}</span>
+                </a>
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+
+      <div class="flex flex-col">
+        <label class="label-fanta">Assegna a</label>
+        <div class="dropdown w-full">
+          <div
+            tabindex="0"
+            role="button"
+            class="input-fanta flex justify-between items-center bg-white text-gray-800 h-[50px] border border-gray-300 rounded-lg px-3 focus:ring-bordeaux focus:border-bordeaux"
+          >
+            @if (getSelectedUser(); as selectedUser) {
+              <div class="flex items-center gap-2">
+                <lucide-icon name="user" class="w-4 h-4 text-bordeaux"></lucide-icon>
+                <span class="font-bold text-xs"
+                  >{{ selectedUser.name }} {{ selectedUser.surname }}</span
+                >
+              </div>
+            } @else {
+              <span class="text-gray-400 font-normal text-xs">Nessuno</span>
+            }
+            <lucide-icon name="chevron-down" class="w-4 h-4 text-gray-400"></lucide-icon>
+          </div>
+          <ul
+            tabindex="0"
+            class="dropdown-content z-[100] menu p-2 shadow-2xl bg-white rounded-xl w-full mt-2 border border-gray-100 max-h-60 overflow-y-auto block"
+          >
+            <li class="mb-1">
+              <a
+                onclick="document.activeElement.blur()"
+                (click)="setUserId(null)"
+                class="hover:bg-gray-100 p-3 rounded-lg font-medium text-xs text-gray-400 transition-colors"
+              >
+                Nessuno
+              </a>
+            </li>
+            @for (u of availableUsersForCreation(); track u.id) {
+              <li class="mb-1">
+                <a
+                  onclick="document.activeElement.blur()"
+                  (click)="setUserId(u.id)"
+                  class="hover:bg-bordeaux hover:text-white p-3 rounded-lg font-bold text-xs text-gray-700 transition-colors"
+                >
+                  {{ u.name }} {{ u.surname }}
+                </a>
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-span-full mt-2 border-t pt-4">
+      <label class="label-fanta mb-2">Foto Profilo (Galleria o Fotocamera)</label>
+      <div
+        class="flex items-center gap-6 bg-gray-50 p-3 rounded-xl border border-dashed border-gray-300"
+      >
+        <div class="avatar placeholder">
+          <div
+            class="w-16 h-16 rounded-full border-4 border-white shadow-md bg-gray-200 flex items-center justify-center text-gray-400"
+          >
+            @if (imagePreview()) {
+              <img [src]="imagePreview()" alt="Preview" class="object-cover" />
+            } @else {
+              <lucide-icon name="user-round" class="w-8 h-8"></lucide-icon>
+            }
+          </div>
+        </div>
+        <div class="flex-1">
+          <input
+            #fileInput
+            type="file"
+            accept="image/*"
+            class="hidden"
+            (change)="onFileSelected($event)"
+          />
+          <button
+            type="button"
+            (click)="fileInput.click()"
+            class="btn btn-sm bg-white border-gray-300 text-gray-700 hover:bg-gray-100 shadow-sm rounded-lg"
+          >
+            Scegli dalla Galleria
+          </button>
+        </div>
+        @if (imagePreview()) {
+          <button
+            type="button"
+            (click)="removeImage(); fileInput.value = ''"
+            class="btn btn-xs btn-circle btn-ghost text-red-500"
+          >
+            <lucide-icon name="trash" class="w-4 h-4"></lucide-icon>
+          </button>
+        }
+      </div>
+    </div>
+
+    <button type="submit" [disabled]="playerForm.invalid || isUploadingImage()" class="btn-fanta">
+      {{ isUploadingImage() ? 'Caricamento foto...' : 'Salva Giocatore Completo' }}
+    </button>
+  </form>
+</section>
+
+<div
+  class="flex flex-col md:flex-row gap-3 mb-4 items-center justify-between bg-white p-4 rounded-3xl shadow-sm border border-gray-100"
+>
+  <div class="relative w-full sm:w-64 shrink-0">
+    <lucide-icon
+      name="search"
+      class="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 z-10"
+    ></lucide-icon>
+
+    <input
+      type="text"
+      placeholder="Cerca giocatore..."
+      [value]="searchTerm()"
+      (input)="onSearchChange($event)"
+      class="input-fanta w-full text-xs h-9 !pl-20 !pr-10"
+    />
+
+    <button
+      type="button"
+      (click)="clearSearch()"
+      class="absolute right-1.5 top-1/2 -translate-y-1/2 btn btn-xs btn-circle btn-ghost text-gray-400 hover:text-gray-700 min-h-0 h-6 w-6 z-10"
+      [class.invisible]="!searchTerm()"
+    >
+      <lucide-icon name="x" class="w-3.5 h-3.5"></lucide-icon>
+    </button>
+  </div>
+
+  <div class="flex flex-wrap gap-2 w-full md:w-auto justify-center">
+    <button
+      (click)="setFilterRole('TUTTI')"
+      [class.bg-gray-800]="filterRole() === 'TUTTI'"
+      [class.text-white]="filterRole() === 'TUTTI'"
+      [class.bg-gray-100]="filterRole() !== 'TUTTI'"
+      [class.text-gray-600]="filterRole() !== 'TUTTI'"
+      class="btn btn-sm border-none rounded-xl text-[10px] font-bold uppercase tracking-wider transition-colors"
+    >
+      Tutti
+    </button>
+    <button
+      (click)="setFilterRole('PORTIERE')"
+      [class.bg-yellow-500]="filterRole() === 'PORTIERE'"
+      [class.text-white]="filterRole() === 'PORTIERE'"
+      [class.bg-gray-100]="filterRole() !== 'PORTIERE'"
+      [class.text-gray-600]="filterRole() !== 'PORTIERE'"
+      class="btn btn-sm border-none rounded-xl text-[10px] font-bold uppercase tracking-wider transition-colors"
+    >
+      Portieri
+    </button>
+    <button
+      (click)="setFilterRole('DIFENSORE')"
+      [class.bg-blue-500]="filterRole() === 'DIFENSORE'"
+      [class.text-white]="filterRole() === 'DIFENSORE'"
+      [class.bg-gray-100]="filterRole() !== 'DIFENSORE'"
+      [class.text-gray-600]="filterRole() !== 'DIFENSORE'"
+      class="btn btn-sm border-none rounded-xl text-[10px] font-bold uppercase tracking-wider transition-colors"
+    >
+      Difensori
+    </button>
+    <button
+      (click)="setFilterRole('CENTROCAMPISTA')"
+      [class.bg-green-600]="filterRole() === 'CENTROCAMPISTA'"
+      [class.text-white]="filterRole() === 'CENTROCAMPISTA'"
+      [class.bg-gray-100]="filterRole() !== 'CENTROCAMPISTA'"
+      [class.text-gray-600]="filterRole() !== 'CENTROCAMPISTA'"
+      class="btn btn-sm border-none rounded-xl text-[10px] font-bold uppercase tracking-wider transition-colors"
+    >
+      Centrocampisti
+    </button>
+    <button
+      (click)="setFilterRole('ATTACCANTE')"
+      [class.bg-red-600]="filterRole() === 'ATTACCANTE'"
+      [class.text-white]="filterRole() === 'ATTACCANTE'"
+      [class.bg-gray-100]="filterRole() !== 'ATTACCANTE'"
+      [class.text-gray-600]="filterRole() !== 'ATTACCANTE'"
+      class="btn btn-sm border-none rounded-xl text-[10px] font-bold uppercase tracking-wider transition-colors"
+    >
+      Attaccanti
+    </button>
+  </div>
+
+  <button
+    (click)="toggleSortOrder()"
+    class="btn btn-sm bg-white border border-gray-200 hover:bg-gray-50 shadow-sm rounded-xl text-[10px] font-bold uppercase tracking-wider text-gray-700 w-full md:w-auto"
+  >
+    <lucide-icon name="arrow-up-down" class="w-3.5 h-3.5 mr-1"></lucide-icon> Ordina:
+    {{ sortOrder() === 'ASC' ? 'A-Z' : 'Z-A' }}
+  </button>
+
+  <button
+    type="button"
+    (click)="toggleTrashMode()"
+    [ngClass]="
+      isTrashMode()
+        ? 'bg-gray-800 text-white hover:bg-black'
+        : 'bg-red-50 text-red-500 hover:bg-red-100'
+    "
+    class="btn btn-sm border-none shadow-sm rounded-xl text-[10px] font-bold uppercase tracking-wider flex-1 md:flex-none"
+  >
+    <lucide-icon
+      [name]="isTrashMode() ? 'arrow-left' : 'trash'"
+      class="w-3.5 h-3.5 mr-1"
+    ></lucide-icon>
+    {{ isTrashMode() ? 'Torna al Listone' : 'Cestino' }}
+  </button>
+</div>
+
+<div class="overflow-x-auto card-fanta p-0 max-w-none shadow-sm border border-gray-100">
+  <table class="table table-xs sm:table-sm w-full">
+    <thead class="bg-gray-50 sticky top-0 z-10">
+      <tr class="text-gray-400 text-[9px] sm:text-[10px] uppercase">
+        <th class="w-8 text-center hidden sm:table-cell">Naz.</th>
+        <th class="px-2 sm:px-4">Calciatore</th>
+        <th class="px-1 sm:px-4">Ruolo</th>
+        <th class="text-right pr-2 sm:pr-4">Azioni</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (isLoading()) {
+        @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+          <tr>
+            <td class="text-center align-middle hidden sm:table-cell py-3">
+              <div class="skeleton h-3.5 w-5 mx-auto rounded-sm bg-gray-200"></div>
+            </td>
+
+            <td class="px-2 sm:px-4 py-3 w-full max-w-[140px] sm:max-w-none">
+              <div class="flex items-center gap-2">
+                <div class="skeleton w-7 h-7 sm:w-8 sm:h-8 rounded-full shrink-0 bg-gray-200"></div>
+                <div class="flex flex-col gap-1.5 w-full">
+                  <div class="skeleton h-3 w-24 sm:w-32 bg-gray-200"></div>
+                  <div class="skeleton h-2 w-16 sm:w-20 bg-gray-200"></div>
+                </div>
+              </div>
+            </td>
+
+            <td class="px-1 sm:px-4 align-middle">
+              <div class="skeleton h-4 w-12 sm:w-16 rounded bg-gray-200"></div>
+            </td>
+
+            <td class="text-right align-middle pr-2 sm:pr-4 whitespace-nowrap">
+              <div class="flex items-center justify-end gap-1">
+                <div class="skeleton w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-200"></div>
+                <div
+                  class="skeleton w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-200 hidden sm:block"
+                ></div>
+                <div
+                  class="skeleton w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-200 hidden sm:block"
+                ></div>
+              </div>
+            </td>
+          </tr>
+        }
+      } @else {
+        @for (p of players(); track p.id) {
+          <tr class="hover cursor-pointer" (click)="openPlayerDetail(p)">
+            <td class="text-center align-middle hidden sm:table-cell">
+              <img
+                [src]="'https://flagcdn.com/' + p.nationality.toLowerCase() + '.svg'"
+                class="w-5 h-auto shadow-sm inline-block"
+              />
+            </td>
+
+            <td class="px-2 sm:px-4 py-2 w-full max-w-[140px] sm:max-w-none">
+              <div class="flex items-center gap-2">
+                <div class="avatar shrink-0">
+                  <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full shadow-sm">
+                    <img
+                      [src]="
+                        p.profileImg ||
+                        'https://ui-avatars.com/api/?name=' +
+                          p.name +
+                          '+' +
+                          p.surname +
+                          '&background=f3f4f6&color=800020&bold=true'
+                      "
+                    />
+                  </div>
+                </div>
+                <div class="flex flex-col min-w-0">
+                  <div
+                    class="font-bold text-gray-800 text-[11px] sm:text-sm leading-tight truncate"
+                  >
+                    {{ p.name }} {{ p.surname }}
+                    @if (p.nickname) {
+                      <span class="text-gray-400 italic font-normal text-[9px] sm:text-[10px]"
+                        >"{{ p.nickname }}"</span
+                      >
+                    }
+                  </div>
+                  @if (getUserName(p.userId); as userName) {
+                    <div
+                      class="text-[9px] sm:text-[10px] text-gray-500 mt-0.5 flex items-center gap-1 font-medium truncate"
+                    >
+                      <lucide-icon name="user" class="w-2.5 h-2.5 shrink-0"></lucide-icon>
+                      <span class="truncate">{{ userName }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            </td>
+
+            <td class="px-1 sm:px-4 align-middle">
+              <span
+                class="badge badge-sm font-bold text-[8px] sm:text-[9px] border-none uppercase text-white px-1 sm:px-2"
+                [ngClass]="{
+                  'bg-yellow-500': p.role === 'PORTIERE',
+                  'bg-blue-500': p.role === 'DIFENSORE',
+                  'bg-green-600': p.role === 'CENTROCAMPISTA',
+                  'bg-red-600': p.role === 'ATTACCANTE',
+                }"
+              >
+                {{ p.role }}
+              </span>
+            </td>
+
+            <td class="text-right align-middle pr-2 sm:pr-4 whitespace-nowrap">
+              <div class="flex items-center justify-end gap-0.5 sm:gap-1">
+                <button
+                  type="button"
+                  (click)="openPlayerDetail(p); $event.stopPropagation()"
+                  class="text-blue-500 hover:text-blue-700 btn btn-ghost btn-circle min-h-0 w-6 h-6 sm:w-8 sm:h-8 p-0"
+                  title="Vedi Statistiche"
+                >
+                  <lucide-icon name="eye" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></lucide-icon>
+                </button>
+
+                @if (isTrashMode()) {
+                  <button
+                    type="button"
+                    (click)="restorePlayer(p.id, $event)"
+                    class="text-green-500 hover:text-green-700 btn btn-ghost btn-circle min-h-0 w-6 h-6 sm:w-8 sm:h-8 bg-green-50 p-0"
+                    title="Ripristina"
+                  >
+                    <lucide-icon name="refresh-ccw" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></lucide-icon>
+                  </button>
+                } @else {
+                  <button
+                    type="button"
+                    (click)="openEditModal(p, $event)"
+                    class="text-orange-400 hover:text-orange-600 btn btn-ghost btn-circle min-h-0 w-6 h-6 sm:w-8 sm:h-8 p-0"
+                    title="Modifica"
+                  >
+                    <lucide-icon name="pencil" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></lucide-icon>
+                  </button>
+                  <button
+                    type="button"
+                    (click)="deletePlayer(p.id); $event.stopPropagation()"
+                    class="text-red-400 hover:text-red-600 btn btn-ghost btn-circle min-h-0 w-6 h-6 sm:w-8 sm:h-8 p-0"
+                    title="Elimina"
+                  >
+                    <lucide-icon name="trash" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></lucide-icon>
+                  </button>
+                }
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="4" class="text-center py-8 text-gray-400 text-sm">
+              Nessun calciatore trovato.
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+<div
+  class="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/50 rounded-b-2xl mt-4"
+>
+  <p class="text-xs text-gray-500 font-medium">
+    Pagina {{ currentPage() + 1 }} di {{ totalPages() || 1 }}
+    <span class="text-gray-400">({{ totalElements() }} calciatori trovati)</span>
+  </p>
+
+  <div class="flex gap-2">
+    <button
+      (click)="prevPage()"
+      [disabled]="currentPage() === 0"
+      class="btn btn-sm btn-ghost bg-white border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-50 shadow-sm"
+    >
+      <lucide-icon name="chevron-left" class="w-4 h-4"></lucide-icon> Precedente
+    </button>
+    <button
+      (click)="nextPage()"
+      [disabled]="currentPage() >= totalPages() - 1"
+      class="btn btn-sm btn-ghost bg-white border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-50 shadow-sm"
+    >
+      Successivo <lucide-icon name="chevron-right" class="w-4 h-4"></lucide-icon>
+    </button>
+  </div>
+</div>
+
+<!-- ===== MODALE DETTAGLIO GIOCATORE ===== -->
+<app-fanta-modal [isOpen]="isDetailModalOpen()" (closed)="closePlayerDetail()" size="md">
+  @if (selectedPlayerDetail(); as player) {
+    <div class="-m-6">
+      <div
+        class="relative h-28 sm:h-32 flex items-center justify-center shrink-0 rounded-t-3xl"
+        [ngClass]="{
+          'bg-yellow-500': player.role === 'PORTIERE',
+          'bg-blue-500': player.role === 'DIFENSORE',
+          'bg-green-600': player.role === 'CENTROCAMPISTA',
+          'bg-red-600': player.role === 'ATTACCANTE',
+        }"
+      >
+        <button
+          type="button"
+          (click)="closePlayerDetail()"
+          class="btn btn-sm btn-circle btn-ghost absolute top-4 right-4 text-white hover:bg-black/20"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div class="px-5 pb-8 sm:px-8 sm:pb-10 text-center -mt-14 sm:-mt-16 relative z-10">
+        <div class="avatar online">
+          <div
+            class="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 border-white bg-white shadow-xl mx-auto"
+          >
+            <img
+              [src]="
+                player.profileImg ||
+                'https://ui-avatars.com/api/?name=' +
+                  player.name +
+                  '+' +
+                  player.surname +
+                  '&background=f3f4f6&color=800020&bold=true'
+              "
+              class="object-cover"
+            />
+          </div>
+        </div>
+
+        <h3 class="font-black text-2xl sm:text-3xl text-gray-800 mt-4 leading-tight tracking-tight">
+          {{ player.name }} <br />
+          {{ player.surname }}
+        </h3>
+
+        @if (player.nickname) {
+          <p class="text-gray-400 italic font-medium text-sm sm:text-base mt-1">
+            "{{ player.nickname }}"
+          </p>
+        }
+
+        <div class="flex items-center justify-center gap-3 mt-4">
+          <img
+            [src]="'https://flagcdn.com/' + player.nationality.toLowerCase() + '.svg'"
+            class="w-6 h-auto shadow-sm rounded-sm"
+          />
+          <span
+            class="badge font-black text-[10px] sm:text-xs tracking-widest border-none uppercase text-white shadow-sm px-3 py-3"
+            [ngClass]="{
+              'bg-yellow-500': player.role === 'PORTIERE',
+              'bg-blue-500': player.role === 'DIFENSORE',
+              'bg-green-600': player.role === 'CENTROCAMPISTA',
+              'bg-red-600': player.role === 'ATTACCANTE',
+            }"
+          >
+            {{ player.role }}
+          </span>
+        </div>
+
+        <div class="mt-4 flex justify-center">
+          <div
+            class="inline-flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 shadow-sm"
+          >
+            <lucide-icon name="user" class="w-4 h-4 text-bordeaux"></lucide-icon>
+            Proprietario: <span class="text-gray-900">{{ getUserName(player.userId) }}</span>
+          </div>
+        </div>
+
+        <div class="mt-8 bg-gray-50 rounded-3xl p-4 sm:p-5 border border-gray-100">
+          <div
+            class="flex flex-col items-center justify-center py-5 bg-white rounded-2xl shadow-sm border border-gray-100 mb-3"
+          >
+            <span
+              class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1 text-center"
+              >Fanta Media Attuale</span
+            >
+            <span
+              class="text-4xl font-black"
+              [class.text-green-600]="player.averageFantaVote >= 6"
+              [class.text-red-500]="player.averageFantaVote < 6 && player.averageFantaVote > 0"
+              [class.text-gray-800]="player.averageFantaVote === 0"
+            >
+              {{ player.averageFantaVote | number: '1.2-2' }}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+            <div
+              class="flex flex-col items-center justify-center py-3 sm:py-4 bg-white rounded-2xl shadow-sm border border-gray-100"
+            >
+              <span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-1"
+                >Presenze</span
+              >
+              <span class="text-xl sm:text-2xl font-black text-gray-800">{{
+                player.gamesPlayed
+              }}</span>
+            </div>
+            <div
+              class="flex flex-col items-center justify-center py-3 sm:py-4 bg-white rounded-2xl shadow-sm border border-gray-100"
+            >
+              <span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-1"
+                >Gol</span
+              >
+              <span class="text-xl sm:text-2xl font-black text-gray-800">{{
+                player.totalGoal
+              }}</span>
+            </div>
+            <div
+              class="flex flex-col items-center justify-center py-3 sm:py-4 bg-white rounded-2xl shadow-sm border border-gray-100"
+            >
+              <span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-1"
+                >Assist</span
+              >
+              <span class="text-xl sm:text-2xl font-black text-gray-800">{{
+                player.totalAssist
+              }}</span>
+            </div>
+            <div
+              class="flex flex-col items-center justify-center py-3 sm:py-4 bg-white rounded-2xl shadow-sm border border-red-50"
+            >
+              <span class="text-[9px] text-red-400 font-bold uppercase tracking-widest mb-1"
+                >Autogol</span
+              >
+              <span class="text-xl sm:text-2xl font-black text-red-600">{{
+                player.totalOwnGoal
+              }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</app-fanta-modal>
+
+<!-- ===== MODALE CONFERMA ELIMINAZIONE ===== -->
+<app-fanta-modal
+  [isOpen]="isConfirmModalOpen()"
+  (closed)="closeModal()"
+  size="sm"
+  [disableBackdropClose]="true"
+>
+  <div class="flex items-center gap-3 mb-4">
+    <div class="p-2 bg-bordeaux/10 rounded-full flex items-center justify-center shrink-0">
+      <lucide-icon name="triangle-alert" class="w-5 h-5 sm:w-6 sm:h-6 text-bordeaux"></lucide-icon>
+    </div>
+    <h3 class="font-black text-lg sm:text-xl text-gray-800 tracking-tight">
+      {{ modalTitle() }}
+    </h3>
+  </div>
+  <p class="text-gray-500 text-xs sm:text-sm leading-relaxed mb-6">{{ modalMessage() }}</p>
+
+  <div class="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
+    <button
+      type="button"
+      (click)="closeModal()"
+      class="btn w-full sm:flex-1 bg-gray-50 border-none text-gray-500 hover:bg-gray-100 rounded-2xl font-bold uppercase text-[10px] sm:text-xs tracking-widest"
+    >
+      Annulla
+    </button>
+    <button
+      (click)="confirmAction()"
+      class="btn w-full sm:flex-1 bg-bordeaux text-white border-none hover:bg-bordeaux-dark rounded-2xl font-bold uppercase text-[10px] sm:text-xs tracking-widest shadow-lg shadow-bordeaux/20"
+    >
+      Conferma
+    </button>
+  </div>
+</app-fanta-modal>
+
+<!-- ===== MODALE MODIFICA GIOCATORE ===== -->
+<app-fanta-modal
+  [isOpen]="isEditModalOpen()"
+  title="Modifica Calciatore"
+  (closed)="closeEditModal()"
+  size="xl"
+>
+  <form [formGroup]="editPlayerForm" (ngSubmit)="onSubmitEditPlayer()" class="space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+      <div>
+        <label class="label-fanta block mb-1">Nome</label>
+        <input type="text" formControlName="name" class="input-fanta w-full" />
+      </div>
+
+      <div>
+        <label class="label-fanta block mb-1">Cognome</label>
+        <input type="text" formControlName="surname" class="input-fanta w-full" />
+      </div>
+
+      <div>
+        <label class="label-fanta block mb-1">Soprannome</label>
+        <input type="text" formControlName="nickname" class="input-fanta w-full" />
+      </div>
+
+      <div class="flex flex-col">
+        <label class="label-fanta block mb-1">Ruolo</label>
+        <div class="dropdown w-full">
+          <div
+            tabindex="0"
+            role="button"
+            class="input-fanta flex justify-between items-center bg-white text-gray-800 h-[50px] border border-gray-300 rounded-lg px-3 w-full"
+          >
+            <span class="font-bold text-xs">{{ editPlayerForm.get('role')?.value }}</span>
+            <lucide-icon name="chevron-down" class="w-4 h-4 text-gray-400"></lucide-icon>
+          </div>
+          <ul
+            tabindex="0"
+            class="dropdown-content z-[1] menu p-2 shadow-2xl bg-white rounded-xl w-full mt-2 border border-gray-100 block"
+          >
+            @for (r of ['PORTIERE', 'DIFENSORE', 'CENTROCAMPISTA', 'ATTACCANTE']; track r) {
+              <li class="mb-1">
+                <a
+                  onclick="document.activeElement.blur()"
+                  (click)="setEditRole(r)"
+                  class="hover:bg-bordeaux hover:text-white p-3 rounded-lg font-bold text-xs transition-colors"
+                >
+                  {{ r }}
+                </a>
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+
+      <div class="flex flex-col">
+        <label class="label-fanta block mb-1">Nazionalità</label>
+        <div class="dropdown w-full">
+          <div
+            tabindex="0"
+            role="button"
+            class="input-fanta flex justify-between items-center bg-white text-gray-800 h-[50px] border border-gray-300 rounded-lg px-3 w-full"
+          >
+            @if (getEditSelectedCountry(); as selected) {
+              <div class="flex items-center gap-3">
+                <img
+                  [src]="'https://flagcdn.com/' + selected.code + '.svg'"
+                  class="w-5 h-auto shadow-sm"
+                />
+                <span class="font-bold text-xs">{{ selected.name }}</span>
+              </div>
+            }
+            <lucide-icon name="chevron-down" class="w-4 h-4 text-gray-400"></lucide-icon>
+          </div>
+          <ul
+            tabindex="0"
+            class="dropdown-content z-[1] menu p-2 shadow-2xl bg-white rounded-xl w-full mt-2 border border-gray-100 max-h-48 overflow-y-auto block"
+          >
+            @for (country of countries; track country.code) {
+              <li class="mb-1">
+                <a
+                  onclick="document.activeElement.blur()"
+                  (click)="setEditNationality(country.code)"
+                  class="hover:bg-bordeaux hover:text-white flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer text-gray-700"
+                >
+                  <img
+                    [src]="'https://flagcdn.com/' + country.code + '.svg'"
+                    class="w-5 h-auto shadow-sm"
+                  />
+                  <span class="font-bold text-xs">{{ country.name }}</span>
+                </a>
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+
+      <div class="flex flex-col">
+        <label class="label-fanta block mb-1">Assegna a</label>
+        <div class="dropdown w-full">
+          <div
+            tabindex="0"
+            role="button"
+            class="input-fanta flex justify-between items-center bg-white text-gray-800 h-[50px] border border-gray-300 rounded-lg px-3 w-full"
+          >
+            @if (getEditSelectedUser(); as selectedUser) {
+              <div class="flex items-center gap-2">
+                <lucide-icon name="user" class="w-4 h-4 text-bordeaux"></lucide-icon>
+                <span class="font-bold text-xs"
+                  >{{ selectedUser.name }} {{ selectedUser.surname }}</span
+                >
+              </div>
+            } @else {
+              <span class="text-gray-400 font-normal text-xs">Nessuno</span>
+            }
+            <lucide-icon name="chevron-down" class="w-4 h-4 text-gray-400"></lucide-icon>
+          </div>
+          <ul
+            tabindex="0"
+            class="dropdown-content z-[200] menu p-2 shadow-2xl bg-white rounded-xl w-full mt-2 border border-gray-100 max-h-60 overflow-y-auto block"
+          >
+            <li class="mb-1">
+              <a
+                onclick="document.activeElement.blur()"
+                (click)="setEditUserId(null)"
+                class="hover:bg-gray-100 p-3 rounded-lg font-medium text-xs text-gray-400 transition-colors"
+              >
+                Nessuno
+              </a>
+            </li>
+            @for (u of availableUsersForEdit(); track u.id) {
+              <li class="mb-1">
+                <a
+                  onclick="document.activeElement.blur()"
+                  (click)="setEditUserId(u.id)"
+                  class="hover:bg-bordeaux hover:text-white p-3 rounded-lg font-bold text-xs text-gray-700 transition-colors"
+                >
+                  {{ u.name }} {{ u.surname }}
+                </a>
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="border-t pt-4 mt-2">
+      <label class="label-fanta mb-2 block">Foto Profilo</label>
+      <div
+        class="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 bg-gray-50 p-4 rounded-xl border border-dashed border-gray-300"
+      >
+        <div class="avatar placeholder shrink-0">
+          <div
+            class="w-16 h-16 rounded-full border-4 border-white shadow-md bg-gray-200 flex items-center justify-center text-gray-400"
+          >
+            @if (editImagePreview()) {
+              <img [src]="editImagePreview()" alt="Preview" class="object-cover" />
+            } @else {
+              <lucide-icon name="user-round" class="w-8 h-8"></lucide-icon>
+            }
+          </div>
+        </div>
+        <div class="flex-1 w-full flex flex-col sm:flex-row items-center gap-3 mt-2 sm:mt-0">
+          <input
+            #editFileInput
+            type="file"
+            accept="image/*"
+            class="hidden"
+            (change)="onEditFileSelected($event)"
+          />
+          <button
+            type="button"
+            (click)="editFileInput.click()"
+            class="btn btn-sm w-full sm:w-auto bg-white border-gray-300 text-gray-700 hover:bg-gray-100 shadow-sm rounded-lg"
+          >
+            Scegli Immagine
+          </button>
+          @if (editImagePreview()) {
+            <button
+              type="button"
+              (click)="removeEditImage(); editFileInput.value = ''"
+              class="btn btn-sm btn-circle btn-ghost text-red-500 bg-red-50 sm:bg-transparent"
+            >
+              <lucide-icon name="trash" class="w-4 h-4"></lucide-icon>
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-2 border-t">
+      <button
+        type="button"
+        (click)="closeEditModal()"
+        class="btn w-full sm:w-auto bg-gray-100 border-none text-gray-600 hover:bg-gray-200 rounded-xl font-bold uppercase text-xs tracking-widest"
+      >
+        Annulla
+      </button>
+      <button
+        type="submit"
+        [disabled]="editPlayerForm.invalid || isUploadingEditImage()"
+        class="btn w-full sm:w-auto bg-bordeaux text-white border-none hover:bg-bordeaux-dark rounded-xl font-bold uppercase text-xs tracking-widest shadow-lg shadow-bordeaux/20"
+      >
+        {{ isUploadingEditImage() ? 'Caricamento...' : 'Salva Modifiche' }}
+      </button>
+    </div>
+  </form>
+</app-fanta-modal>

@@ -1,0 +1,438 @@
+<div class="min-h-screen bg-[#f0ede8] pb-28">
+  <app-header title="Sfide Community" iconName="dices">
+    <div custom-subtitle>
+      @if (betStats().total > 0) {
+        <div
+          class="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-tight"
+        >
+          <span class="flex items-center gap-1">
+            <lucide-icon name="circle-check" class="w-3 h-3 text-emerald-500"></lucide-icon>
+            {{ betStats().won }} Vinte
+          </span>
+          <span class="text-gray-300">/</span>
+          <span>{{ betStats().total }} Giocate</span>
+        </div>
+      } @else {
+        <span class="text-gray-400 text-[10px] font-bold uppercase tracking-widest"
+          >Indovina & vinci punti</span
+        >
+      }
+    </div>
+
+    <div extra class="flex flex-col sm:flex-row items-end sm:items-center gap-1.5 sm:gap-2">
+      @if (activeMatchDay()) {
+        <div
+          class="h-7 w-24 rounded-full border flex items-center justify-center transition-all"
+          [ngClass]="{
+            'bg-emerald-50 text-emerald-700 border-emerald-200':
+              activeMatchDay()?.status === 'OPEN',
+            'bg-red-50 text-red-600 border-red-200': activeMatchDay()?.status === 'LIVE',
+            'bg-gray-50 text-gray-500 border-gray-200': activeMatchDay()?.status === 'CALCULATED',
+          }"
+        >
+          <span class="text-[10px] font-black uppercase tracking-tighter">
+            {{
+              activeMatchDay()?.status === 'LIVE'
+                ? '🔴 Live'
+                : activeMatchDay()?.status === 'OPEN'
+                  ? '🟢 Aperta'
+                  : '✅ Chiusa'
+            }}
+          </span>
+        </div>
+      }
+
+      <div
+        class="h-7 w-24 bg-amber-100 text-amber-700 border border-amber-200 rounded-full flex items-center justify-center gap-1 shadow-sm"
+      >
+        <lucide-icon name="coins" class="w-3.5 h-3.5 text-amber-500"></lucide-icon>
+        <span class="text-[10px] font-black uppercase tracking-tighter">
+          {{ myGlobalEntry()?.betPoints || 0 }} <span class="opacity-70">pt</span>
+        </span>
+      </div>
+    </div>
+
+    <div bottom class="flex bg-gray-100 p-1 rounded-xl mt-4">
+      <button
+        (click)="activeFilter.set('ALL')"
+        class="flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all"
+        [ngClass]="
+          activeFilter() === 'ALL'
+            ? 'bg-white shadow-sm text-bordeaux'
+            : 'text-gray-400 hover:text-gray-600'
+        "
+      >
+        Tutte
+      </button>
+      <button
+        (click)="activeFilter.set('CREATED')"
+        class="flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all"
+        [ngClass]="
+          activeFilter() === 'CREATED'
+            ? 'bg-white shadow-sm text-bordeaux'
+            : 'text-gray-400 hover:text-gray-600'
+        "
+      >
+        Create
+      </button>
+      <button
+        (click)="activeFilter.set('PREDICTED')"
+        class="flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all"
+        [ngClass]="
+          activeFilter() === 'PREDICTED'
+            ? 'bg-white shadow-sm text-bordeaux'
+            : 'text-gray-400 hover:text-gray-600'
+        "
+      >
+        Puntate
+      </button>
+    </div>
+  </app-header>
+
+  @if (isLoading()) {
+    <div class="px-4 pt-5 space-y-4 animate-pulse">
+      <div class="h-56 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm"></div>
+      <div class="h-56 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm"></div>
+    </div>
+  } @else {
+    <div class="px-4 pt-5 space-y-5">
+      @if (displayBets().length === 0) {
+        <div
+          class="bg-white/50 rounded-[2.5rem] p-12 text-center border-2 border-dashed border-gray-200"
+        >
+          <lucide-icon
+            name="clipboard-x"
+            class="w-12 h-12 text-gray-300 mx-auto mb-4"
+          ></lucide-icon>
+          <h3 class="text-gray-400 font-black uppercase text-xs tracking-widest">
+            Nessuna sfida trovata
+          </h3>
+        </div>
+      }
+
+      @for (bet of displayBets(); track bet.id) {
+        <div
+          class="relative rounded-[2.5rem] p-6 shadow-sm border overflow-hidden transition-all duration-300"
+          [ngClass]="{
+            'border-bordeaux/30 bg-bordeaux/5': bet.status === 'PENDING' && bet.userPrediction,
+            'border-emerald-200 bg-emerald-50/40': bet.status === 'WON',
+            'border-red-200 bg-red-50/40': bet.status === 'LOST',
+            'border-gray-100 bg-white': bet.status === 'PENDING' && !bet.userPrediction,
+          }"
+        >
+          <div
+            class="absolute left-0 top-0 bottom-0 w-1.5"
+            [ngClass]="{
+              'bg-bordeaux': bet.status === 'PENDING' && bet.userPrediction,
+              'bg-emerald-400': bet.status === 'WON',
+              'bg-red-400': bet.status === 'LOST',
+              'bg-gray-200': bet.status === 'PENDING' && !bet.userPrediction,
+            }"
+          ></div>
+
+          <div class="flex justify-between items-start mb-4 pl-2">
+            <div class="flex items-center gap-2">
+              <div
+                class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black text-white uppercase shadow-sm"
+                [ngClass]="bet.isCreator ? 'bg-bordeaux' : 'bg-gray-300'"
+              >
+                {{ bet.creatorName?.substring(0, 2) }}
+              </div>
+              <div>
+                <p
+                  class="text-[9px] font-black uppercase tracking-widest leading-none"
+                  [ngClass]="bet.isCreator ? 'text-bordeaux' : 'text-gray-500'"
+                >
+                  {{ bet.creatorName }}
+                </p>
+                <p class="text-[8px] font-bold text-gray-400 uppercase mt-1">Autore</p>
+              </div>
+            </div>
+
+            <div class="flex flex-col items-end gap-1">
+              @if (bet.userPrediction) {
+                <div
+                  class="text-[9px] font-black uppercase flex items-center gap-1 bg-white px-2 py-1 rounded shadow-sm border border-gray-100"
+                  [ngClass]="bet.userPrediction === 'YES' ? 'text-emerald-600' : 'text-gray-600'"
+                >
+                  <span>Hai votato: {{ bet.userPrediction === 'YES' ? 'SÌ' : 'NO' }}</span>
+                </div>
+              }
+              <div class="flex items-center gap-0.5 ml-1">
+                @if (
+                  (bet.isCreator || authService.isAdmin()) && bet.status === 'PENDING' && canVote()
+                ) {
+                  <button
+                    (click)="openEditModal(bet)"
+                    class="p-2 text-gray-400 hover:text-bordeaux"
+                  >
+                    <lucide-icon name="pencil" class="w-4 h-4"></lucide-icon>
+                  </button>
+                  <button
+                    (click)="openDeleteModal(bet.id)"
+                    class="p-2 text-gray-400 hover:text-red-500"
+                  >
+                    <lucide-icon name="trash-2" class="w-4 h-4"></lucide-icon>
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+
+          <h3 class="text-lg font-black text-gray-800 leading-tight mb-5 pl-2">
+            {{ bet.description }}
+          </h3>
+
+          <div class="pl-2 mb-6">
+            @if (bet.participantCount > 0) {
+              <div class="flex justify-between text-[10px] font-black uppercase mb-1.5">
+                <span class="text-emerald-500">SÌ {{ bet.yesCount || 0 }}</span>
+                <span class="text-gray-400">{{ bet.participantCount }} voti</span>
+                <span class="text-gray-700">NO {{ bet.noCount || 0 }}</span>
+              </div>
+              <div class="h-2 bg-red-500 rounded-full overflow-hidden shadow-inner">
+                <div
+                  class="h-full bg-emerald-400 rounded-full transition-all duration-1000"
+                  [style.width.%]="yesPercent(bet)"
+                ></div>
+              </div>
+            } @else {
+              <div
+                class="text-[10px] text-center font-bold text-gray-400 uppercase py-2 bg-gray-100/50 rounded-xl border border-gray-200 border-dashed"
+              >
+                Ancora nessun voto
+              </div>
+            }
+          </div>
+
+          <div class="pl-2">
+            @if (bet.status === 'PENDING') {
+              @if (canVote()) {
+                <div class="grid grid-cols-2 gap-3">
+                  <button
+                    (click)="onPredict(bet.id, 'YES')"
+                    [disabled]="bet.userPrediction === 'YES'"
+                    class="py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all active:scale-95 shadow-sm border"
+                    [ngClass]="
+                      bet.userPrediction === 'YES'
+                        ? 'bg-emerald-500 text-white border-emerald-600 shadow-emerald-500/30'
+                        : 'bg-white text-gray-500 border-gray-200 hover:bg-emerald-50 hover:text-emerald-600'
+                    "
+                  >
+                    {{ bet.userPrediction === 'YES' ? 'Hai puntato SÌ' : 'Punta SÌ' }}
+                  </button>
+                  <button
+                    (click)="onPredict(bet.id, 'NO')"
+                    [disabled]="bet.userPrediction === 'NO'"
+                    class="py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all active:scale-95 shadow-sm border"
+                    [ngClass]="
+                      bet.userPrediction === 'NO'
+                        ? 'bg-red-500 text-white border-red-600 shadow-red-500/30'
+                        : 'bg-white text-gray-500 border-gray-200 hover:bg-red-50 hover:text-red-600'
+                    "
+                  >
+                    {{ bet.userPrediction === 'NO' ? 'Hai puntato NO' : 'Punta NO' }}
+                  </button>
+                </div>
+                @if (bet.userPrediction) {
+                  <button
+                    (click)="openWithdrawModal(bet.id)"
+                    class="w-full mt-4 text-[9px] font-black uppercase text-gray-400 hover:text-gray-600 tracking-widest flex justify-center items-center gap-1.5"
+                  >
+                    <lucide-icon name="undo-2" class="w-3 h-3"></lucide-icon> Ritira Scommessa
+                  </button>
+                }
+              } @else {
+                <div
+                  class="flex items-center justify-center p-4 rounded-2xl border gap-2"
+                  [ngClass]="
+                    isLiveMatchDay()
+                      ? 'bg-amber-50/50 border-amber-200 text-amber-700'
+                      : 'bg-gray-50 border-gray-200 text-gray-500'
+                  "
+                >
+                  <lucide-icon
+                    [name]="isLiveMatchDay() ? 'timer' : 'hourglass'"
+                    [class]="isLiveMatchDay() ? 'w-5 h-5 animate-pulse' : 'w-5 h-5'"
+                  ></lucide-icon>
+                  <span class="text-[10px] font-black uppercase tracking-widest">
+                    {{
+                      isLiveMatchDay()
+                        ? 'Match in corso - Giocate Chiuse'
+                        : 'In attesa di risoluzione'
+                    }}
+                  </span>
+                </div>
+              }
+            } @else {
+              <div
+                class="flex items-center justify-between p-4 rounded-2xl border bg-white/50 backdrop-blur-sm"
+                [ngClass]="
+                  bet.userPrediction
+                    ? didIWin(bet)
+                      ? 'border-emerald-200 text-emerald-700'
+                      : 'border-red-200 text-red-700'
+                    : 'border-gray-200 text-gray-500'
+                "
+              >
+                <div class="flex items-center gap-2">
+                  @if (bet.userPrediction) {
+                    <lucide-icon
+                      [name]="didIWin(bet) ? 'trophy' : 'frown'"
+                      class="w-5 h-5"
+                    ></lucide-icon>
+                    <span class="text-xs font-black uppercase tracking-widest">
+                      {{ didIWin(bet) ? 'Scommessa Vinta! 🎉' : 'Scommessa Persa ❌' }}
+                    </span>
+                  } @else {
+                    <lucide-icon name="circle-slash" class="w-5 h-5 opacity-50"></lucide-icon>
+                    <span class="text-xs font-black uppercase tracking-widest">Sfida Chiusa</span>
+                  }
+                </div>
+                <span class="text-[10px] font-bold uppercase tracking-widest opacity-70"
+                  >Esito: {{ bet.status === 'WON' ? 'SÌ' : 'NO' }}</span
+                >
+              </div>
+            }
+          </div>
+
+          @if (authService.isAdmin() && bet.status === 'PENDING') {
+            <div
+              class="mt-5 pt-3 border-t-2 border-dashed border-red-100 bg-red-50/40 -mx-6 -mb-6 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3"
+            >
+              <span
+                class="text-[10px] font-black uppercase tracking-widest text-red-800 flex items-center gap-1.5"
+              >
+                <lucide-icon name="shield-alert" class="w-4 h-4"></lucide-icon> Pannello Risoluzione
+                Admin
+              </span>
+              <div class="flex gap-2 w-full sm:w-auto">
+                <button
+                  (click)="resolveBet(bet.id, 'WON')"
+                  class="flex-1 sm:flex-none bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-md active:scale-95 transition-all"
+                >
+                  Conferma SÌ
+                </button>
+                <button
+                  (click)="resolveBet(bet.id, 'LOST')"
+                  class="flex-1 sm:flex-none bg-red-500 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-md active:scale-95 transition-all"
+                >
+                  Conferma NO
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+      <div class="h-10"></div>
+    </div>
+  }
+
+  @if (activeMatchDay()?.status === 'OPEN') {
+    <button
+      (click)="openCreateModal()"
+      class="fixed bottom-24 right-6 w-16 h-16 bg-bordeaux text-white rounded-full shadow-2xl shadow-bordeaux/40 flex items-center justify-center active:scale-90 transition-all z-40 border-4 border-[#f0ede8]"
+    >
+      <lucide-icon name="plus" class="w-8 h-8"></lucide-icon>
+    </button>
+  }
+
+  <app-fanta-modal title="Nuova Sfida" [isOpen]="isCreateModalOpen()" (closed)="closeCreateModal()">
+    <div class="p-2">
+      <textarea
+        [(ngModel)]="newBetDescription"
+        rows="4"
+        placeholder="Cosa succederà?"
+        class="w-full bg-gray-50 border-2 border-gray-100 rounded-3xl p-5 text-sm font-bold focus:border-bordeaux outline-none resize-none mb-6"
+      ></textarea>
+      <button
+        (click)="createBet()"
+        [disabled]="!newBetDescription().trim()"
+        class="w-full py-4 bg-bordeaux text-white rounded-2xl font-black uppercase text-xs active:scale-95 disabled:opacity-30 shadow-lg shadow-bordeaux/20"
+      >
+        Pubblica Sfida
+      </button>
+    </div>
+  </app-fanta-modal>
+
+  <app-fanta-modal title="Modifica Sfida" [isOpen]="isEditModalOpen()" (closed)="closeEditModal()">
+    <div class="p-2">
+      <textarea
+        [(ngModel)]="editDescription"
+        rows="4"
+        class="w-full bg-gray-50 border-2 border-gray-100 rounded-3xl p-5 text-sm font-bold focus:border-bordeaux outline-none resize-none mb-6"
+      ></textarea>
+      <button
+        (click)="confirmEdit()"
+        [disabled]="!editDescription().trim()"
+        class="w-full py-4 bg-bordeaux text-white rounded-2xl font-black uppercase text-xs active:scale-95 disabled:opacity-30"
+      >
+        Salva Modifiche
+      </button>
+    </div>
+  </app-fanta-modal>
+
+  <app-fanta-modal
+    title="Risolvi Sfida"
+    [isOpen]="isConfirmModalOpen()"
+    (closed)="closeConfirmModal()"
+  >
+    <div class="p-2 text-center">
+      <h3 class="text-lg font-black text-gray-800 mb-4 uppercase tracking-tighter leading-tight">
+        Confermi l'esito {{ pendingStatus() === 'WON' ? 'SÌ' : 'NO' }}?
+      </h3>
+      <button
+        (click)="confirmResolve()"
+        class="w-full py-4 bg-emerald-500 text-white rounded-2xl font-black uppercase text-xs active:scale-95"
+      >
+        Conferma Risoluzione
+      </button>
+    </div>
+  </app-fanta-modal>
+
+  <app-fanta-modal
+    title="Elimina Sfida"
+    [isOpen]="isDeleteModalOpen()"
+    (closed)="closeDeleteModal()"
+  >
+    <div class="p-2 text-center">
+      <lucide-icon name="trash-2" class="w-12 h-12 text-red-500 mx-auto mb-4"></lucide-icon>
+      <h3 class="text-lg font-black text-gray-800 mb-6 uppercase tracking-tighter leading-tight">
+        Eliminare definitivamente questa sfida?
+      </h3>
+      <div class="flex gap-3">
+        <button
+          (click)="closeDeleteModal()"
+          class="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black uppercase text-[10px]"
+        >
+          Annulla
+        </button>
+        <button
+          (click)="confirmDelete()"
+          class="flex-1 py-4 bg-red-500 text-white rounded-2xl font-black uppercase text-[10px]"
+        >
+          Elimina
+        </button>
+      </div>
+    </div>
+  </app-fanta-modal>
+
+  <app-fanta-modal
+    title="Ritira Puntata"
+    [isOpen]="isWithdrawModalOpen()"
+    (closed)="closeWithdrawModal()"
+  >
+    <div class="p-2 text-center">
+      <lucide-icon name="undo-2" class="w-12 h-12 text-amber-500 mx-auto mb-4"></lucide-icon>
+      <h3 class="text-lg font-black text-gray-800 mb-6 uppercase tracking-tighter">
+        Vuoi ritirare il tuo voto?
+      </h3>
+      <button
+        (click)="confirmWithdraw()"
+        class="w-full py-4 bg-amber-500 text-white rounded-2xl font-black uppercase text-xs active:scale-95 shadow-lg shadow-amber-500/20"
+      >
+        Ritira Voto
+      </button>
+    </div>
+  </app-fanta-modal>
+</div>
