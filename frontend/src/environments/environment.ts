@@ -4,7 +4,7 @@
 
 export const environment = {
   production: true,
-  apiUrl: 'https://fantamaggiore-api.onrender.com/api',
+  apiUrl: 'https://fantamaggiore-live-api.onrender.com/api',
 
   // ⬇️ AGGIUNGI LE TUE CREDENZIALI SUPABASE
   // Le trovi su: Supabase Dashboard → Project Settings → API
