@@ -3,9 +3,6 @@
 Applicazione web di fantacalcio tra amici con dinamiche di community 
 (sfide, classifiche, punteggi ed eventi live).
 
-🔗 Demo: https://fantamaggiore.vercel.app
-👤 Demo admin: demo@test.com / Password123
-
 ## Stack tecnico
 - **Backend:** Java, Spring Boot
 - **Frontend:** Angular, TypeScript, Tailwind CSS, daisyUI
