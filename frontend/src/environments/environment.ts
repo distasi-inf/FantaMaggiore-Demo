@@ -8,6 +8,6 @@ export const environment = {
 
   // ⬇️ AGGIUNGI LE TUE CREDENZIALI SUPABASE
   // Le trovi su: Supabase Dashboard → Project Settings → API
-  supabaseUrl: 'https://zmtdvmncvckityqvipss.supabase.co',   // <-- Project URL
-  supabaseAnonKey: 'sb_publishable_XuXB3TVMtp4MaqP3IS__BA_v184NuVW',                              // <-- anon public key
+  supabaseUrl: 'https://oljmmwdiuebilrnevxai.supabase.co',   // <-- Project URL
+  supabaseAnonKey: 'sb_publishable_OckqXIm9eOKwm8erQmilOw_REJCxOAA',                              // <-- anon public key
 };
