@@ -30,6 +30,6 @@
     "!/**/*.*",
     "!/**/*__*",
     "!/**/*__*/**",
-    "!https://fantamaggiore-api.onrender.com/**"
+    "!https://fantamaggiore-live-api.onrender.com/**"
   ]
 }
